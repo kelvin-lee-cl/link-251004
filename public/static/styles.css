@@ -1,0 +1,50 @@
+/* Optional CSS to enhance the modal */
+.modal-body {
+    padding: 0;
+    position: relative;
+}
+
+.btn-close {
+    background-color: white;
+    opacity: 0.8;
+    z-index: 1;
+}
+
+.btn-close:hover {
+    opacity: 1;
+}
+
+/* Responsive font sizes */
+@media (max-width: 1120px) {
+    .responsive-title {
+        font-size: 2.4rem;
+        /* Adjusted for medium screens */
+    }
+}
+
+@media (max-width: 768px) {
+    .responsive-title {
+        font-size: 1.2rem;
+        /* Adjusted for small screens */
+    }
+}
+
+@media (max-width: 480px) {
+    .responsive-title {
+        font-size: 1rem;
+        /* Further adjustment for extra small screens */
+    }
+}
+
+li.active {
+    font-weight: bold;
+}
+
+.fade-in {
+    opacity: 0;
+    transition: opacity 0.5s ease-in;
+}
+
+.fade-in.visible {
+    opacity: 1;
+}

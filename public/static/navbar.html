@@ -1,0 +1,182 @@
+<!-- Shared Navbar Component -->
+<style>
+    .navbar-light .navbar-nav .nav-link.active {
+        font-weight: bold;
+        color: #FF5E62;
+    }
+
+    nav.navbar {
+        background-color: #ffffff !important;
+    }
+
+    /* Icon navbar styling */
+    .navbar-nav .nav-link {
+        padding: 0.75rem 1rem;
+        font-size: 1.2rem;
+        transition: all 0.3s ease;
+        border-radius: 0.375rem;
+        margin: 0 0.25rem;
+    }
+
+    .navbar-nav .nav-link:hover {
+        background-color: rgba(255, 94, 98, 0.1);
+        color: #FF5E62 !important;
+        transform: translateY(-2px);
+    }
+
+    .navbar-nav .nav-link.active {
+        background-color: rgba(255, 94, 98, 0.15);
+        color: #FF5E62 !important;
+        font-weight: bold;
+    }
+
+    .navbar-nav .nav-link i {
+        font-size: 1.1rem;
+    }
+
+    /* Logout button styling */
+    .logout-btn {
+        color: #dc3545 !important;
+        border: 1px solid #dc3545;
+        border-radius: 0.375rem;
+        margin-left: 0.5rem;
+    }
+
+    .logout-btn:hover {
+        background-color: #dc3545 !important;
+        color: white !important;
+        transform: translateY(-2px);
+        box-shadow: 0 2px 8px rgba(220, 53, 69, 0.3);
+    }
+
+    .logout-btn:active {
+        transform: translateY(0);
+    }
+
+    /* User info section styling */
+    #userInfoSection {
+        border-left: 1px solid #dee2e6;
+        padding-left: 1rem;
+        margin-left: 1rem;
+    }
+
+    .navbar-text {
+        color: #495057 !important;
+        font-size: 0.9rem;
+        font-weight: 500;
+    }
+
+    .navbar-text i {
+        color: #6c757d;
+    }
+
+    @media (max-width: 991px) {
+        #userInfoSection {
+            border-left: none;
+            border-top: 1px solid #dee2e6;
+            padding-left: 0;
+            padding-top: 1rem;
+            margin-left: 0;
+            margin-top: 1rem;
+            justify-content: center;
+        }
+    }
+</style>
+<nav class="navbar navbar-expand-lg navbar-light bg-white px-5 fixed-top">
+    <div class="d-flex align-items-center">
+        <a class="navbar-brand me-3" href="https://future-leaders-union.odoo.com/zh_TW" target="_blank">
+            <img src="https://future-leaders-union.odoo.com/web/image/2228-183b3469/FLU%20helper%20training_S1%20%282%29.webp"
+                height="60" class="d-inline-block align-middle" alt="">
+        </a>
+        <a class="navbar-brand me-3" href="https://www.hkcnlink.hk/link-centre/" target="_blank">
+            <img src="https://storage.googleapis.com/www-hkcnlink-hk/2014/10/header_11.png" height="80"
+                class="d-inline-block align-middle" style="padding:5px;" alt="" target="_blank">
+        </a>
+        <a class="navbar-brand me-3" href="https://mcsps.edu.hk/" target="_blank">
+            <img src="https://www.hkcnlink.hk/wp-content/uploads/2014/10/header_2.png" height="80"
+                class="d-inline-block align-middle" style="padding:5px;" alt="" target="_blank">
+        </a>
+    </div>
+
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent"
+        aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="justify-content-end collapse navbar-collapse" id="navbarSupportedContent">
+        <ul class="navbar-nav ml-auto mx-2">
+            <li class="nav-item">
+                <a class="nav-link" id="homeLink" href="index.html" data-bs-toggle="tooltip" data-bs-placement="bottom"
+                    title="Home">
+                    <i class="fas fa-home"></i>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" id="publicDisplayLink" href="public-display.html" data-bs-toggle="tooltip"
+                    data-bs-placement="bottom" title="Public Display">
+                    <i class="fas fa-tv"></i>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" id="questionBoothLink" href="question-booth.html" data-bs-toggle="tooltip"
+                    data-bs-placement="bottom" title="Question Booth">
+                    <i class="fas fa-question-circle"></i>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" id="redemptionBoothLink" href="redemption-booth.html" data-bs-toggle="tooltip"
+                    data-bs-placement="bottom" title="Redemption Booth">
+                    <i class="fas fa-gift"></i>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" id="constructionCornerLink" href="construction-corner.html" data-bs-toggle="tooltip"
+                    data-bs-placement="bottom" title="Construction Corner">
+                    <i class="fas fa-tools"></i>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" id="imgGenLink" href="../img-gen/img_gen.html" data-bs-toggle="tooltip"
+                    data-bs-placement="bottom" title="Gen-AI Art Studio">
+                    <i class="fas fa-palette"></i>
+                </a>
+            </li>
+
+        </ul>
+
+        <!-- User Info Section (appears after login) -->
+        <div class="d-flex align-items-center d-none" id="userInfoSection">
+            <span id="userIdDisplay" class="navbar-text me-3">
+                <i class="fas fa-user me-1"></i>
+                <span id="userIdText">User ID: </span>
+            </span>
+            <a class="nav-link logout-btn" id="logoutBtn" href="#" onclick="logout(); return false;"
+                data-bs-toggle="tooltip" data-bs-placement="bottom" title="Sign Out">
+                <i class="fas fa-sign-out-alt"></i>
+            </a>
+        </div>
+    </div>
+</nav>
+
+<script>
+    // Run adjustment after navbar is loaded
+    document.addEventListener('DOMContentLoaded', function () {
+
+        // Initialize Bootstrap tooltips
+        setTimeout(() => {
+            const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+            const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
+        }, 200);
+
+        // Ensure content does not scroll under the fixed navbar
+        const applyBodyOffset = () => {
+            const navbar = document.querySelector('#navbar-container nav.navbar') || document.querySelector('nav.navbar');
+            if (!navbar) return;
+            const height = navbar.offsetHeight || 0;
+            document.body.style.paddingTop = height + 'px';
+        };
+
+        applyBodyOffset();
+        window.addEventListener('resize', applyBodyOffset);
+    });
+</script>

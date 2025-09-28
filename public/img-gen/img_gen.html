@@ -1,0 +1,1599 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart City AI Art Studio</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">
+    <link rel="icon" type="image/png" sizes="32x32" href="../favicon/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="../favicon/favicon-16x16.png">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- Load shared Firebase config -->
+    <script src="../static/script.js"></script>
+    <!-- Add Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js";
+        import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-storage.js";
+        import { getFirestore, collection, addDoc, getDocs, query, where, orderBy, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
+
+        // Use shared Firebase config
+        const firebaseConfig = getFirebaseConfig();
+
+        // Initialize Firebase
+        let app, storage, db;
+        try {
+            app = initializeApp(firebaseConfig);
+            console.log("Firebase initialized successfully");
+
+            // Initialize Storage
+            try {
+                storage = getStorage(app);
+                console.log("Firebase Storage initialized successfully");
+                window.fbStorage = storage; // Make storage available globally
+            } catch (storageError) {
+                console.error("Storage initialization failed:", storageError);
+                alert("Firebase storage initialization failed. Upload functionality may not be available.");
+            }
+
+            // Initialize Firestore
+            try {
+                db = getFirestore(app);
+                console.log("Firebase Firestore initialized successfully");
+                window.fbFirestore = db; // Make Firestore available globally
+            } catch (firestoreError) {
+                console.error("Firestore initialization failed:", firestoreError);
+                alert("Firebase Firestore initialization failed. Gallery sync may not be available.");
+            }
+        } catch (firebaseError) {
+            console.error("Firebase initialization failed:", firebaseError);
+            alert("Firebase initialization failed. Upload functionality is not available.");
+        }
+
+        // Generate a random user ID if not already set
+        if (!localStorage.getItem('currentUserId')) {
+            const randomId = 'user_' + Math.random().toString(36).substring(2, 8);
+            localStorage.setItem('currentUserId', randomId);
+            console.log('Generated random user ID:', randomId);
+        }
+
+        // Load community gallery with all images from all users
+        async function loadCommunityGallery() {
+            const communityGalleryContainer = document.getElementById('communityGalleryContainer');
+            console.log('🔄 Loading community gallery...');
+
+            try {
+                if (!db) {
+                    throw new Error('Firebase Firestore not initialized');
+                }
+
+                console.log('✅ Firebase Firestore is initialized, querying gallery...');
+
+                // Get ALL images from Firebase Firestore (no user filter)
+                const galleryRef = collection(db, 'gallery');
+                const q = query(galleryRef);
+
+                console.log('🔍 Executing Firebase query for ALL users...');
+                const querySnapshot = await getDocs(q);
+                const images = [];
+
+                console.log(`📊 Query returned ${querySnapshot.size} documents from ALL users`);
+
+                querySnapshot.forEach((doc) => {
+                    const data = doc.data();
+                    console.log('📄 Document data from user:', data.userId, '-', data.prompt, '-', data.url);
+                    images.push({
+                        id: doc.id,
+                        ...data
+                    });
+                });
+
+                // Sort by timestamp (newest first) on client side
+                images.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+                console.log(`✅ Processed ${images.length} images from ALL users`);
+
+                if (images.length === 0) {
+                    console.log('⚠️ No images found in Firebase - this means either:');
+                    console.log('1. No images have been generated yet');
+                    console.log('2. Images are being saved to a different collection');
+                    console.log('3. There\'s an error in the save process');
+
+                    communityGalleryContainer.innerHTML = `
+                        <div class="col-12 text-center text-muted py-5">
+                            <i class="bi bi-image fs-1"></i>
+                            <p class="mt-3">No images in community gallery yet. Generate some images to see them here!</p>
+                            <p class="text-warning mt-2">💡 Try generating a new image and check the browser console for save messages.</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                console.log('Displaying images in community gallery');
+
+                // Count unique users
+                const uniqueUsers = [...new Set(images.map(img => img.userId))];
+                console.log(`Images from ${uniqueUsers.length} different users:`, uniqueUsers);
+
+                // Get current user ID for comparison
+                const currentUserId = localStorage.getItem('currentUserId');
+
+                // Display all community gallery items
+                communityGalleryContainer.innerHTML = `
+                    <div class="col-12 mb-3">
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle me-2"></i>
+                            <strong>${images.length} images</strong> from <strong>${uniqueUsers.length} different users</strong>
+                        </div>
+                    </div>
+                ` + images.map((image, index) => {
+                    const isOwnImage = image.userId === currentUserId;
+                    return `
+                    <div class="col-md-4 col-lg-3">
+                        <div class="gallery-item">
+                            <img src="${image.url}" alt="Generated Image" onclick="viewCommunityImage('${image.url}', '${image.prompt}', '${image.userId}')" style="cursor: pointer;">
+                            <div class="gallery-item-info">
+                                <div class="user-info">
+                                    <div class="user-id">User ID: ${image.userId}</div>
+                                    <div class="prompt-text">
+                                        <div id="community-prompt-${index}" class="prompt-text-truncated">${image.prompt}</div>
+                                        ${image.prompt.length > 100 ? `<button class="show-more-btn" onclick="toggleCommunityPrompt(${index})" id="community-toggle-${index}">Show more</button>` : ''}
+                                    </div>
+                                    <div class="timestamp">${formatTimestamp(image.timestamp)}</div>
+                                </div>
+                                <div class="gallery-item-actions mt-2">
+                                    ${isOwnImage ? `
+                                        <button class="btn btn-sm btn-outline-primary" onclick="downloadImage('${image.url}')" title="Download">
+                                            <i class="bi bi-download me-1"></i>Download
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-danger" onclick="deleteImageFromFirebase('${image.id}')" title="Delete">
+                                            <i class="bi bi-trash me-1"></i>Delete
+                                        </button>
+                                    ` : `
+                                        <span class="text-muted small">View only - not your image</span>
+                                    `}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                }).join('');
+
+                console.log('Community gallery loaded successfully');
+
+            } catch (error) {
+                console.error('Error loading community gallery:', error);
+                communityGalleryContainer.innerHTML = `
+                    <div class="col-12 text-center text-danger py-5">
+                        <i class="bi bi-exclamation-triangle fs-1"></i>
+                        <p class="mt-3">Failed to load community gallery. Please try again later.</p>
+                        <p class="mt-2 text-muted">Error: ${error.message}</p>
+                        <p class="mt-2 text-muted">Stack: ${error.stack}</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Format timestamp for display
+        function formatTimestamp(timestamp) {
+            const date = new Date(timestamp);
+            return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+        }
+
+        // View community image in modal
+        function viewCommunityImage(url, prompt, userId) {
+            const currentUserId = localStorage.getItem('currentUserId');
+            const isOwnImage = userId === currentUserId;
+
+            const modal = document.createElement('div');
+            modal.className = 'modal fade';
+            modal.innerHTML = `
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Community Image</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body text-center">
+                            <img src="${url}" class="img-fluid" alt="Generated Image">
+                            <div class="mt-3">
+                                <div class="user-id">User ID: ${userId}</div>
+                                <p class="mt-2 text-muted">${prompt}</p>
+                                ${!isOwnImage ? '<p class="text-warning small"><i class="bi bi-info-circle me-1"></i>This is not your image - view only</p>' : ''}
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            ${isOwnImage ? `<button type="button" class="btn btn-primary" onclick="downloadImage('${url}')">Download</button>` : ''}
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            document.body.appendChild(modal);
+            const bsModal = new bootstrap.Modal(modal);
+            bsModal.show();
+
+            modal.addEventListener('hidden.bs.modal', () => {
+                document.body.removeChild(modal);
+            });
+        }
+
+        // Gallery functionality with Firebase Firestore
+        async function loadGallery() {
+            const galleryContainer = document.getElementById('galleryContainer');
+            const userId = localStorage.getItem('currentUserId');
+
+            if (!userId) {
+                console.error('No user ID found');
+                return;
+            }
+
+            try {
+                // Show loading state
+                galleryContainer.innerHTML = `
+                    <div class="col-12 text-center text-muted py-5">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="mt-3">Loading gallery from cloud...</p>
+                    </div>
+                `;
+
+                // Get images from Firebase Firestore
+                const db = window.fbFirestore;
+                if (!db) {
+                    throw new Error('Firebase Firestore not initialized');
+                }
+
+                const galleryRef = collection(db, 'gallery');
+                const q = query(
+                    galleryRef,
+                    where('userId', '==', userId)
+                );
+
+                const querySnapshot = await getDocs(q);
+                const images = [];
+
+                querySnapshot.forEach((doc) => {
+                    images.push({
+                        id: doc.id,
+                        ...doc.data()
+                    });
+                });
+
+                // Sort by timestamp (newest first) on client side
+                images.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+                if (images.length === 0) {
+                    galleryContainer.innerHTML = `
+                        <div class="col-12 text-center text-muted py-5">
+                            <i class="bi bi-image fs-1"></i>
+                            <p class="mt-3">No images in gallery yet. Generate some images to see them here!</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                // Display gallery items
+                galleryContainer.innerHTML = images.map((image, index) => `
+                    <div class="col-md-4 col-lg-3">
+                        <div class="gallery-item">
+                            <img src="${image.url}" alt="Generated Image" onclick="viewImage('${image.url}', '${image.prompt}')" style="cursor: pointer;">
+                            <div class="gallery-item-info">
+                                <div class="prompt-text">
+                                    <div id="prompt-${index}" class="prompt-text-truncated">${image.prompt}</div>
+                                    ${image.prompt.length > 100 ? `<button class="show-more-btn" onclick="togglePrompt(${index})" id="toggle-${index}">Show more</button>` : ''}
+                                </div>
+                                <div class="timestamp">${new Date(image.timestamp).toLocaleDateString()}</div>
+                                <div class="gallery-item-actions mt-2">
+                                    <button class="btn btn-sm btn-outline-primary me-2" onclick="downloadImage('${image.url}')" title="Download">
+                                        <i class="bi bi-download me-1"></i>Download
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-danger" onclick="deleteImageFromFirebase('${image.id}')" title="Delete">
+                                        <i class="bi bi-trash me-1"></i>Delete
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading gallery from Firebase:', error);
+                // Fallback to localStorage
+                const storedImages = JSON.parse(localStorage.getItem(`gallery_${userId}`) || '[]');
+                if (storedImages.length === 0) {
+                    galleryContainer.innerHTML = `
+                        <div class="col-12 text-center text-muted py-5">
+                            <i class="bi bi-image fs-1"></i>
+                            <p class="mt-3">No images in gallery yet. Generate some images to see them here!</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                // Display localStorage images
+                galleryContainer.innerHTML = storedImages.map((image, index) => `
+                    <div class="col-md-4 col-lg-3">
+                        <div class="gallery-item">
+                            <img src="${image.url}" alt="Generated Image" onclick="viewImage('${image.url}', '${image.prompt}')" style="cursor: pointer;">
+                            <div class="gallery-item-info">
+                                <div class="prompt-text">${image.prompt}</div>
+                                <div class="timestamp">${new Date(image.timestamp).toLocaleDateString()}</div>
+                                <div class="gallery-item-actions mt-2">
+                                    <button class="btn btn-sm btn-outline-primary me-2" onclick="downloadImage('${image.url}')" title="Download">
+                                        <i class="bi bi-download me-1"></i>Download
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-danger" onclick="deleteImage(${index})" title="Delete">
+                                        <i class="bi bi-trash me-1"></i>Delete
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            }
+        }
+
+        // Add to gallery function
+        async function addToGallery(imageUrl, prompt) {
+            const userId = localStorage.getItem('currentUserId');
+            console.log('addToGallery called with:', { imageUrl, prompt, userId });
+
+            if (!userId) {
+                console.error('No user ID found');
+                return;
+            }
+
+            const newImage = {
+                url: imageUrl,
+                prompt: prompt,
+                userId: userId,
+                timestamp: new Date().toISOString()
+            };
+
+            console.log('Attempting to save image to Firebase:', newImage);
+
+            try {
+                // Save to Firebase Firestore
+                const db = window.fbFirestore;
+                console.log('Firebase Firestore instance:', db);
+
+                if (db) {
+                    const galleryRef = collection(db, 'gallery');
+                    console.log('Gallery collection reference:', galleryRef);
+
+                    const docRef = await addDoc(galleryRef, newImage);
+                    console.log('✅ Image successfully added to Firebase gallery with ID:', docRef.id);
+
+                    // Also reload community gallery to show the new image
+                    if (window.loadCommunityGallery) {
+                        window.loadCommunityGallery();
+                    }
+                } else {
+                    throw new Error('Firebase Firestore not initialized');
+                }
+            } catch (error) {
+                console.error('❌ Error saving to Firebase:', error);
+                console.error('Error details:', error.message, error.stack);
+
+                // Fallback to localStorage
+                const storedImages = JSON.parse(localStorage.getItem(`gallery_${userId}`) || '[]');
+                storedImages.unshift(newImage);
+                localStorage.setItem(`gallery_${userId}`, JSON.stringify(storedImages));
+                console.log('Image saved to localStorage as fallback');
+            }
+
+            // Reload gallery
+            loadGallery();
+        }
+
+        // Make functions globally available
+        window.loadCommunityGallery = loadCommunityGallery;
+        window.viewCommunityImage = viewCommunityImage;
+        window.formatTimestamp = formatTimestamp;
+        window.loadGallery = loadGallery;
+        window.addToGallery = addToGallery;
+    </script>
+    <style>
+        body {
+            background: linear-gradient(135deg, #f6f9fc 0%, #eef2f7 100%);
+        }
+
+        /* Custom navbar styling - consistent with home page */
+        .navbar {
+            background-color: #ffffff !important;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .navbar-light .navbar-nav .nav-link {
+            color: #495057;
+        }
+
+        .navbar-light .navbar-nav .nav-link:hover {
+            color: #FF5E62;
+        }
+
+        .navbar-light .navbar-nav .nav-link.active {
+            color: #FF5E62;
+            font-weight: bold;
+        }
+
+        /* Ensure navbar container has proper spacing */
+        #navbar-container {
+            margin-bottom: 0;
+        }
+
+
+
+        .text-rotator {
+            position: relative;
+            display: flex;
+            overflow: hidden;
+        }
+
+        .text-item {
+            position: absolute;
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out;
+        }
+
+        .text-item.active {
+            opacity: 1;
+        }
+
+        .button-container {
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+            position: relative;
+            top: 300px;
+        }
+
+
+
+        .btn {
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 10px 20px;
+            margin: 0 10px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .btn:hover {
+            background-color: #0056b3;
+        }
+
+        h4.mb-3 {
+            font-weight: 600;
+            color: var(--text-color);
+            margin: 2rem 0;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            border: none;
+            padding: 0.75rem 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--hover-color);
+            transform: translateY(-1px);
+        }
+
+
+        @media (max-width: 576px) {
+            .container {
+                padding: 1rem;
+            }
+
+            .responsive-text {
+                font-size: 14px;
+                /* Adjust for small screens */
+            }
+
+            .button-container {
+                display: none;
+            }
+
+            .text-item h3 {
+                font-size: 16px;
+            }
+
+            .headline-container img {
+                width: 100%;
+                padding: 10%;
+            }
+        }
+
+        @media (min-width: 577px) and (max-width: 768px) {
+            .responsive-text {
+                font-size: 16px;
+                /* Adjust for medium screens */
+            }
+
+            .button-container {
+                display: none;
+            }
+
+            .text-item h3 {
+                font-size: 18px;
+            }
+        }
+
+        @media (min-width: 769px) and (max-width: 992px) {
+            .responsive-text {
+                font-size: 18px;
+                /* Adjust for large screens */
+            }
+
+            .button-container {
+                display: none;
+            }
+
+            .text-item h3 {
+                font-size: 20px;
+            }
+        }
+
+        @media (min-width: 993px) and (max-width: 1200px) {
+            .responsive-text {
+                font-size: 20px;
+                /* Adjust for extra large screens */
+            }
+
+            .button-container {
+                display: none;
+            }
+
+        }
+
+        @media (min-width: 1201px) and (max-width: 1400px) {
+            .responsive-text {
+                font-size: 22px;
+                /* Adjust for larger extra large screens */
+            }
+
+            .button-container {
+                display: none;
+            }
+        }
+
+        @media (min-width: 1401px) and (max-width: 1600px) {
+            .responsive-text {
+                font-size: 24px;
+                /* Adjust for even larger screens */
+            }
+
+        }
+
+        @media (min-width: 1601px) and (max-width: 18000px) {
+            .responsive-text {
+                font-size: 26px;
+                /* Adjust for very large screens up to 18,000 pixels */
+            }
+        }
+
+        .scrollable-textarea {
+            height: 200px;
+            /* Set a fixed height */
+            overflow-y: auto;
+            /* Enable vertical scrolling */
+        }
+
+        #sectionTitle {
+            transition: opacity 0.3s ease;
+            margin-left: 1rem;
+            font-weight: 500;
+        }
+
+
+        /* ... existing styles ... */
+
+        .section-box {
+            background-color: #ffffff;
+            border-radius: 16px;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.05);
+            padding: 2rem;
+            margin: 1rem 0;
+            transition: all 0.3s ease;
+        }
+
+        .section-box:hover {
+            box-shadow: 0 6px 28px rgba(0, 0, 0, 0.08);
+            transform: translateY(-2px);
+        }
+
+        .section-box img.round {
+            border-radius: 12px;
+            transition: transform 0.3s ease;
+        }
+
+        .section-box {
+            background-color: transparent;
+            padding: 1.5rem;
+            border-radius: 12px;
+        }
+
+        @media (max-width: 768px) {
+            .section-box {
+                padding: 1rem;
+            }
+        }
+
+        li.active {
+            font-weight: bold;
+        }
+
+        /* Add hover animation for the buttons */
+        .btn.rounded-pill:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            color: inherit !important;
+            /* Keep the original text color */
+        }
+
+        /* Ensure WhatsApp button text colors stay fixed */
+        .btn.btn-warning.rounded-pill {
+            color: white !important;
+        }
+
+        .btn.btn-warning.rounded-pill:hover {
+            color: white !important;
+        }
+
+        .btn.btn-info.rounded-pill {
+            color: white !important;
+        }
+
+        .btn.btn-info.rounded-pill:hover {
+            color: white !important;
+        }
+
+        .btn.btn-primary.rounded-pill {
+            color: white !important;
+        }
+
+        .btn.btn-primary.rounded-pill:hover {
+            color: white !important;
+        }
+
+        /* Prompt Card Styles */
+        .card.mb-3 {
+            transition: box-shadow 0.3s ease, transform 0.2s ease;
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+            border-radius: 10px;
+        }
+
+        .card.mb-3:hover {
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            transform: translateY(-2px);
+        }
+
+        .card-header {
+            background-color: var(--secondary-color) !important;
+            border-bottom: 1px solid var(--border-color);
+            padding: 0.75rem 1.25rem;
+        }
+
+        .prompt-card .card-header {
+            border-top-left-radius: 10px;
+            border-top-right-radius: 10px;
+        }
+
+        .action-buttons {
+            opacity: 1;
+        }
+
+        .card-body:hover .action-buttons {
+            opacity: 1;
+        }
+
+        .action-buttons .btn {
+            width: 32px;
+            height: 32px;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+            border: none;
+        }
+
+        .action-buttons .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+        }
+
+        .action-buttons .btn i {
+            font-size: 0.8rem;
+        }
+
+        .copy-btn {
+            background-color: #f8f9fa;
+            color: #6c757d;
+            border: 1px solid #dee2e6 !important;
+        }
+
+        .copy-btn:hover {
+            background-color: #6c757d;
+            color: white;
+        }
+
+        .edit-btn {
+            background-color: #f8f9fa;
+            color: #0d6efd;
+            border: 1px solid #dee2e6 !important;
+        }
+
+        .edit-btn:hover {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .delete-btn {
+            background-color: #f8f9fa;
+            color: #dc3545;
+            border: 1px solid #dee2e6 !important;
+        }
+
+        .delete-btn:hover {
+            background-color: #dc3545;
+            color: white;
+        }
+
+        .btn-secondary {
+            background-color: #6c757d;
+        }
+
+        .btn-secondary:hover {
+            background-color: #5a6268;
+        }
+
+        .btn-primary {
+            background-color: #0d6efd;
+        }
+
+        .btn-primary:hover {
+            background-color: #0b5ed7;
+        }
+
+        .btn-danger {
+            background-color: #dc3545;
+        }
+
+        .btn-danger:hover {
+            background-color: #bb2d3b;
+        }
+
+        .card-body {
+            padding: 1.5rem;
+        }
+
+        .card-text {
+            font-size: 1.05rem;
+            line-height: 1.5;
+            color: #445566;
+        }
+
+        .card {
+            border: none;
+            border-radius: 25px;
+            background: white;
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            overflow: hidden;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+        }
+
+        .upload-area {
+            border: 3px dashed #FF9A9E;
+            border-radius: 20px;
+            padding: 2.5rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: rgba(255, 154, 158, 0.05);
+        }
+
+        .upload-area:hover {
+            border-color: #FF5E62;
+            background: rgba(255, 154, 158, 0.1);
+            transform: scale(1.02);
+        }
+
+        .upload-area i {
+            color: #FF5E62;
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-10px);
+            }
+        }
+
+        .form-control,
+        .form-select {
+            border-radius: 15px;
+            border: 2px solid #eef2f7;
+            padding: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus,
+        .form-select:focus {
+            border-color: #FF9A9E;
+            box-shadow: 0 0 0 0.2rem rgba(255, 154, 158, 0.25);
+        }
+
+        .form-label {
+            color: #2C3E50;
+            font-weight: 600;
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .btn {
+            border-radius: 20px;
+            padding: 10px 25px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #FF9A9E 0%, #FF5E62 100%);
+            border: none;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 94, 98, 0.3);
+        }
+
+        .btn-secondary {
+            background: #2C3E50;
+            border: none;
+        }
+
+        .btn-secondary:hover {
+            background: #34495E;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(44, 62, 80, 0.3);
+        }
+
+        .preview-container {
+            position: relative;
+            max-width: 100%;
+            margin: 1.5rem 0;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .preview-container:hover {
+            transform: scale(1.02);
+        }
+
+        .preview-container img {
+            max-width: 100%;
+            border-radius: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .remove-image {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 50%;
+            padding: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .remove-image:hover {
+            transform: scale(1.1);
+            background: #fff;
+        }
+
+        .result-container {
+            position: relative;
+            max-width: 100%;
+            margin: 1.5rem 0;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .result-container:hover {
+            transform: scale(1.02);
+        }
+
+        .result-container img {
+            max-width: 100%;
+            border-radius: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .action-buttons {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .action-buttons button {
+            background: rgba(255, 255, 255, 0.9);
+            border: none;
+            border-radius: 50%;
+            padding: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .action-buttons button:hover {
+            transform: scale(1.1);
+            background: #fff;
+        }
+
+        .action-buttons i {
+            color: #FF5E62;
+            font-size: 1.2rem;
+        }
+
+        .alert {
+            border-radius: 15px;
+            border: none;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .form-check-input:checked {
+            background-color: #FF5E62;
+            border-color: #FF5E62;
+        }
+
+        .form-check-label {
+            color: #2C3E50;
+            font-weight: 500;
+        }
+
+        #userIdDisplay {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-weight: 600;
+            color: #2C3E50;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .spinner-border {
+            color: #FF5E62;
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.05);
+            }
+
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        .btn-primary:active {
+            animation: pulse 0.3s ease-in-out;
+        }
+
+        /* Gallery Styles */
+        .gallery-item {
+            position: relative;
+            overflow: hidden;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .gallery-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .gallery-item img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            transition: transform 0.3s ease;
+        }
+
+        .gallery-item:hover img {
+            transform: scale(1.05);
+        }
+
+        .gallery-item-info {
+            padding: 15px;
+            background: white;
+            color: #333;
+            position: relative;
+            z-index: 2;
+        }
+
+        .gallery-item-info .prompt-text {
+            font-size: 0.9rem;
+            color: #666;
+            margin-bottom: 8px;
+            line-height: 1.4;
+        }
+
+        .prompt-text-truncated {
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .prompt-text-full {
+            display: block;
+        }
+
+        .show-more-btn {
+            font-size: 0.8rem;
+            color: #007bff;
+            cursor: pointer;
+            text-decoration: none;
+            border: none;
+            background: none;
+            padding: 0;
+            margin-top: 4px;
+        }
+
+        .show-more-btn:hover {
+            color: #0056b3;
+            text-decoration: underline;
+        }
+
+        .gallery-item-info .timestamp {
+            font-size: 0.8rem;
+            color: #999;
+            margin-bottom: 10px;
+        }
+
+        .gallery-item-info .user-id {
+            font-size: 0.8rem;
+            color: #007bff;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .gallery-item-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+
+        .gallery-item-actions .btn {
+            font-size: 0.8rem;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-weight: 500;
+            background-color: #007bff !important;
+            border-color: #007bff !important;
+            color: white !important;
+        }
+
+        .gallery-item-actions .btn:hover {
+            background-color: #28a745 !important;
+            border-color: #28a745 !important;
+            color: white !important;
+        }
+    </style>
+    <link rel="stylesheet" type="text/css" href="../static/style_home.css">
+    <link rel="stylesheet" type="text/css" href="../static/styles.css">
+</head>
+
+<body>
+    <!-- Shared Navbar Container -->
+    <div id="navbar-container"></div>
+    <div class="container py-5 mt-5">
+
+        <!-- Main Content -->
+        <div class="row justify-content-center">
+            <div class="col-md-8 mt-5">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <!-- Generation Type Selection -->
+                        <div class="mb-4">
+                            <div class="text-center">
+                                <h4 class="text-primary"><i class="bi bi-image me-2"></i>Image to Image - Smart City
+                                    Theme</h4>
+                                <p class="text-muted">Transform your character into a futuristic smart city setting</p>
+                            </div>
+                        </div>
+
+
+                        <!-- Image to Image Prompt Builder -->
+                        <div id="imageToImageSection" class="prompt-builder">
+                            <div class="mb-3">
+                                <label for="personDescription" class="form-label">Describe your character</label>
+                                <textarea class="form-control" id="personDescription" rows="2"
+                                    placeholder="Describe your character (e.g., 'A young professional with a friendly smile')"></textarea>
+                            </div>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label for="clothingStyle" class="form-label">Smart City Clothing Style</label>
+                                    <select class="form-select prompt-select" id="clothingStyle">
+                                        <option value="">Select Clothing Style</option>
+                                        <!-- Futuristic Tech Wear -->
+                                        <optgroup label="Futuristic Tech Wear">
+                                            <option value="Smart City Citizen">👤 Smart City Citizen with AR glasses
+                                            </option>
+                                            <option value="Holographic Suit">👔 Holographic Smart Suit</option>
+                                            <option value="Neo-Traditional Fusion">👘 Neo-Traditional Fusion with LED
+                                                elements</option>
+                                            <option value="Cyberpunk Attire">🤖 Cyberpunk Attire with neon accents
+                                            </option>
+                                            <option value="Smart Business Wear">💼 Smart Business Wear with tech
+                                                accessories</option>
+                                        </optgroup>
+                                        <!-- Smart City Uniforms -->
+                                        <optgroup label="Smart City Uniforms">
+                                            <option value="City Administrator">👨‍💼 City Administrator with smart badge
+                                            </option>
+                                            <option value="Tech Engineer">👷‍♂️ Tech Engineer with safety gear</option>
+                                            <option value="Data Analyst">👩‍💻 Data Analyst with AR headset</option>
+                                            <option value="Urban Planner">📊 Urban Planner with smart tablet</option>
+                                            <option value="Sustainability Officer">🌱 Sustainability Officer with
+                                                eco-tech gear</option>
+                                        </optgroup>
+                                        <!-- Future Fashion -->
+                                        <optgroup label="Future Fashion">
+                                            <option value="Smart Casual">👕 Smart Casual with embedded sensors</option>
+                                            <option value="Futuristic Formal">👔 Futuristic Formal with light patterns
+                                            </option>
+                                            <option value="Tech Streetwear">👟 Tech Streetwear with smart shoes</option>
+                                            <option value="Holographic Dress">👗 Holographic Dress with changing
+                                                patterns</option>
+                                            <option value="Smart Athleisure">🏃‍♀️ Smart Athleisure with fitness
+                                                tracking</option>
+                                        </optgroup>
+                                        <!-- Smart Accessories -->
+                                        <optgroup label="Smart Accessories">
+                                            <option value="AR Glasses">🥽 AR Glasses with data overlay</option>
+                                            <option value="Smart Watch">⌚ Smart Watch with city data</option>
+                                            <option value="Holographic Jewelry">💎 Holographic Jewelry with city symbols
+                                            </option>
+                                            <option value="Smart Backpack">🎒 Smart Backpack with charging ports
+                                            </option>
+                                            <option value="Tech Headphones">🎧 Tech Headphones with noise cancellation
+                                            </option>
+                                        </optgroup>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="backgroundStyle" class="form-label">Smart City Background</label>
+                                    <select class="form-select prompt-select" id="backgroundStyle">
+                                        <option value="">Select Background Style</option>
+                                        <!-- Smart City Architecture -->
+                                        <optgroup label="Smart City Architecture">
+                                            <option value="Futuristic Skyline">🏙️ Futuristic Skyline with flying cars
+                                            </option>
+                                            <option value="Smart City Center">🏢 Smart City Center with holographic
+                                                displays</option>
+                                            <option value="Vertical Gardens">🌿 Vertical Gardens on smart buildings
+                                            </option>
+                                            <option value="Floating Platforms">☁️ Floating Platforms in the sky</option>
+                                            <option value="Smart Transportation Hub">🚄 Smart Transportation Hub
+                                            </option>
+                                            <option value="Digital City Square">📱 Digital City Square with AR elements
+                                            </option>
+                                            <option value="Sustainable Energy Towers">⚡ Sustainable Energy Towers
+                                            </option>
+                                        </optgroup>
+                                        <!-- Tech Environments -->
+                                        <optgroup label="Tech Environments">
+                                            <option value="Data Center">💾 Data Center with flowing data streams
+                                            </option>
+                                            <option value="AI Laboratory">🤖 AI Laboratory with robots</option>
+                                            <option value="Smart Office">💼 Smart Office with holographic screens
+                                            </option>
+                                            <option value="Virtual Reality Space">🥽 Virtual Reality Space</option>
+                                            <option value="Quantum Computing Lab">⚛️ Quantum Computing Lab</option>
+                                            <option value="Smart Factory">🏭 Smart Factory with automation</option>
+                                            <option value="Tech Innovation Hub">💡 Tech Innovation Hub</option>
+                                        </optgroup>
+                                        <!-- Future Urban Scenes -->
+                                        <optgroup label="Future Urban Scenes">
+                                            <option value="Neon-lit Streets">🌃 Neon-lit Streets with smart lighting
+                                            </option>
+                                            <option value="Flying Vehicle Traffic">🚁 Flying Vehicle Traffic lanes
+                                            </option>
+                                            <option value="Smart Parks">🌳 Smart Parks with interactive elements
+                                            </option>
+                                            <option value="Underground Smart City">🚇 Underground Smart City</option>
+                                            <option value="Floating Gardens">🌸 Floating Gardens in the sky</option>
+                                            <option value="Smart Shopping District">🛍️ Smart Shopping District</option>
+                                            <option value="Digital Art Gallery">🎨 Digital Art Gallery</option>
+                                        </optgroup>
+                                        <!-- Futuristic Art Styles -->
+                                        <optgroup label="Futuristic Art Styles">
+                                            <option value="Cyberpunk Cityscape">🌆 Cyberpunk Cityscape with neon lights
+                                            </option>
+                                            <option value="Holographic Environment">✨ Holographic Environment</option>
+                                            <option value="Digital Glitch Art">📱 Digital Glitch Art background</option>
+                                            <option value="Neon Vector Graphics">💫 Neon Vector Graphics</option>
+                                            <option value="3D Rendered City">🏗️ 3D Rendered City</option>
+                                            <option value="Augmented Reality Overlay">📲 Augmented Reality Overlay
+                                            </option>
+                                            <option value="Futuristic Minimalism">⚪ Futuristic Minimalism</option>
+                                        </optgroup>
+                                        <!-- Smart City Elements -->
+                                        <optgroup label="Smart City Elements">
+                                            <option value="Smart Traffic System">🚦 Smart Traffic System</option>
+                                            <option value="Environmental Monitoring">🌍 Environmental Monitoring station
+                                            </option>
+                                            <option value="Smart Waste Management">♻️ Smart Waste Management</option>
+                                            <option value="Digital Government Center">🏛️ Digital Government Center
+                                            </option>
+                                            <option value="Smart Healthcare Facility">🏥 Smart Healthcare Facility
+                                            </option>
+                                            <option value="Educational Tech Campus">🎓 Educational Tech Campus</option>
+                                            <option value="Smart Energy Grid">⚡ Smart Energy Grid</option>
+                                        </optgroup>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="mt-3">
+                                <div class="d-flex gap-2">
+                                    <button id="randomizeStyleBtn" class="btn btn-secondary">
+                                        <i class="bi bi-shuffle"></i> Randomize Style
+                                    </button>
+                                    <button id="clearStyleBtn" class="btn btn-outline-secondary">
+                                        <i class="bi bi-x-circle"></i> Clear
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="mt-3">
+                                <label class="form-label">Generated Prompt</label>
+                                <div id="imageToImagePrompt" class="form-control bg-light"
+                                    style="min-height: 60px; font-style: italic;">
+                                    Describe your character and select smart city styles to generate a futuristic
+                                    prompt...
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Image Upload Section -->
+                        <div id="imageUploadSection" class="mb-4">
+                            <label class="form-label">Upload your character image</label>
+                            <div id="uploadArea" class="upload-area"
+                                onclick="document.getElementById('imageInput').click()">
+                                <i class="bi bi-cloud-upload fs-1"></i>
+                                <p class="mb-0">Click here or drag and drop an image</p>
+                                <p class="text-muted small">Supported formats: JPG, PNG, GIF (Max 10MB)</p>
+                                <input type="file" id="imageInput" accept="image/*" class="d-none">
+                            </div>
+                            <div id="previewContainer" class="preview-container d-none">
+                                <img id="imagePreview" src="" alt="Preview">
+                                <div class="remove-image" onclick="removeUploadedImage()">
+                                    <i class="bi bi-x-circle-fill text-danger"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Style Selection -->
+                        <div class="mb-4">
+                            <label for="styleSelect" class="form-label">Select Style</label>
+                            <select class="form-select" id="styleSelect">
+                                <option value="vector_illustration" selected>Vector Illustration</option>
+                                <option value="digital_illustration">Digital Illustration</option>
+                                <option value="realistic_image">Realistic Image</option>
+                            </select>
+                        </div>
+
+                        <!-- Size Selection -->
+                        <div class="mb-4">
+                            <label for="sizeSelect" class="form-label">Select Size</label>
+                            <select class="form-select" id="sizeSelect">
+                                <option value="1024x1024">1024 x 1024</option>
+                                <option value="1365x1024">1365 x 1024</option>
+                                <option value="1024x1365">1024 x 1365</option>
+                                <option value="1536x1024">1536 x 1024</option>
+                                <option value="1024x1536">1024 x 1536</option>
+                                <option value="1820x1024">1820 x 1024</option>
+                                <option value="1024x1820">1024 x 1820</option>
+                                <option value="1024x2048">1024 x 2048</option>
+                                <option value="2048x1024">2048 x 1024</option>
+                            </select>
+                        </div>
+
+                        <!-- Generate Button -->
+                        <div class="text-center">
+                            <button id="testApiKeyBtn" class="btn btn-secondary me-2">Test API Key</button>
+                            <button id="generateBtn" class="btn btn-primary">
+                                <span id="loadingSpinner" class="spinner-border spinner-border-sm d-none" role="status"
+                                    aria-hidden="true"></span>
+                                Generate Image
+                            </button>
+                        </div>
+
+                        <!-- Error Message -->
+                        <div id="errorMessage" class="alert alert-danger mt-3 d-none"></div>
+
+                        <!-- Result Container -->
+                        <div id="resultContainer" class="result-container d-none">
+                            <img id="generatedImage" src="" alt="Generated Image">
+                            <div class="action-buttons">
+                                <button onclick="saveImage()" title="Save Image">
+                                    <i class="bi bi-download"></i>
+                                </button>
+                                <button onclick="regenerateImage()" title="Regenerate">
+                                    <i class="bi bi-arrow-clockwise"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Personal Gallery Section -->
+    <div class="container py-5">
+        <div class="row">
+            <div class="col-12">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-light">
+                        <h4 class="mb-0 text-dark"><i class="bi bi-images me-2"></i>My Gallery</h4>
+                    </div>
+                    <div class="card-body">
+                        <div id="galleryContainer" class="row g-3">
+                            <!-- Gallery items will be loaded here -->
+                            <div class="col-12 text-center text-muted py-5">
+                                <i class="bi bi-image fs-1"></i>
+                                <p class="mt-3">No images in gallery yet. Generate some images to see them here!</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Community Gallery Section -->
+    <div class="container py-5">
+        <div class="row">
+            <div class="col-12">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-light">
+                        <h4 class="mb-0 text-dark"><i class="bi bi-people me-2"></i>Community Gallery</h4>
+                        <p class="mb-0 mt-2 text-dark">Explore images created by ALL users - See everyone's creations!
+                        </p>
+                    </div>
+                    <div class="card-body">
+                        <div id="communityGalleryContainer" class="row g-3">
+                            <!-- Community gallery items will be loaded here -->
+                            <div class="col-12 text-center text-muted py-5">
+                                <div class="spinner-border text-success" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                                <p class="mt-3">Loading community gallery...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/bootstrap.bundle.min.js"></script>
+    <script type="module" src="img_gen.js"></script>
+    <script src="../static/script.js"></script>
+
+    <script>
+        // Check login status and load navbar when page loads
+        document.addEventListener('DOMContentLoaded', function () {
+            // Always check server-side authentication first
+            checkImgGenAccess();
+        });
+
+        async function checkImgGenAccess() {
+            try {
+                // First check if user is authenticated
+                const authResponse = await fetch('/api/auth-status', {
+                    method: 'GET',
+                    credentials: 'include'
+                });
+
+                const authData = await authResponse.json();
+
+                if (!authData.authenticated) {
+                    console.log('User not authenticated, redirecting to home');
+                    window.location.href = '../static/index.html';
+                    return;
+                }
+
+                // Check user type from auth data
+                const userType = authData.userType;
+                console.log('User type:', userType);
+
+                if (userType === 'individual') {
+                    // Individual users can access img_gen
+                    console.log('Access granted to AI Art Studio for individual user');
+                    loadNavbar();
+                    loadGallery();
+                    window.loadCommunityGallery();
+                } else if (userType === 'marble_run') {
+                    // Marble Run participants cannot access img_gen
+                    alert('Marble Run participants cannot access the AI Art Studio. Please use other available features.');
+                    window.location.href = '../static/index.html';
+                } else {
+                    console.log('Unknown user type, redirecting to home');
+                    window.location.href = '../static/index.html';
+                }
+            } catch (error) {
+                console.error('Error checking access:', error);
+                // Fallback: check localStorage user type
+                const userType = localStorage.getItem('userType');
+                if (userType === 'individual') {
+                    console.log('Fallback: Access granted based on localStorage');
+                    loadNavbar();
+                    loadGallery();
+                    window.loadCommunityGallery();
+                } else {
+                    alert('Unable to verify access permissions. Redirecting to home page.');
+                    window.location.href = '../static/index.html';
+                }
+            }
+        }
+
+
+        function viewImage(url, prompt) {
+            // Create modal for viewing image
+            const modal = document.createElement('div');
+            modal.className = 'modal fade';
+            modal.innerHTML = `
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Generated Image</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body text-center">
+                            <img src="${url}" class="img-fluid" alt="Generated Image">
+                            <p class="mt-3 text-muted">${prompt}</p>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            <button type="button" class="btn btn-primary" onclick="downloadImage('${url}')">Download</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            document.body.appendChild(modal);
+            const bsModal = new bootstrap.Modal(modal);
+            bsModal.show();
+
+            modal.addEventListener('hidden.bs.modal', () => {
+                document.body.removeChild(modal);
+            });
+        }
+
+        function downloadImage(url) {
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `generated_image_${Date.now()}.png`;
+            link.click();
+        }
+
+        // Delete from Firebase Firestore
+        async function deleteImageFromFirebase(imageId) {
+            if (confirm('Are you sure you want to delete this image?')) {
+                try {
+                    const db = window.fbFirestore;
+                    if (db) {
+                        await deleteDoc(doc(db, 'gallery', imageId));
+                        console.log('Image deleted from Firebase');
+                        loadGallery();
+                    } else {
+                        throw new Error('Firebase Firestore not initialized');
+                    }
+                } catch (error) {
+                    console.error('Error deleting from Firebase:', error);
+                    alert('Failed to delete image from cloud storage. Please try again.');
+                }
+            }
+        }
+
+        // Fallback delete function for localStorage
+        function deleteImage(index) {
+            if (confirm('Are you sure you want to delete this image?')) {
+                const userId = localStorage.getItem('currentUserId');
+                const storedImages = JSON.parse(localStorage.getItem(`gallery_${userId}`) || '[]');
+                storedImages.splice(index, 1);
+                localStorage.setItem(`gallery_${userId}`, JSON.stringify(storedImages));
+                loadGallery();
+            }
+        }
+
+
+        // Toggle prompt text for personal gallery
+        function togglePrompt(index) {
+            const promptElement = document.getElementById(`prompt-${index}`);
+            const toggleButton = document.getElementById(`toggle-${index}`);
+
+            if (promptElement.classList.contains('prompt-text-truncated')) {
+                promptElement.classList.remove('prompt-text-truncated');
+                promptElement.classList.add('prompt-text-full');
+                toggleButton.textContent = 'Show less';
+            } else {
+                promptElement.classList.remove('prompt-text-full');
+                promptElement.classList.add('prompt-text-truncated');
+                toggleButton.textContent = 'Show more';
+            }
+        }
+
+        // Toggle prompt text for community gallery
+        function toggleCommunityPrompt(index) {
+            const promptElement = document.getElementById(`community-prompt-${index}`);
+            const toggleButton = document.getElementById(`community-toggle-${index}`);
+
+            if (promptElement.classList.contains('prompt-text-truncated')) {
+                promptElement.classList.remove('prompt-text-truncated');
+                promptElement.classList.add('prompt-text-full');
+                toggleButton.textContent = 'Show less';
+            } else {
+                promptElement.classList.remove('prompt-text-full');
+                promptElement.classList.add('prompt-text-truncated');
+                toggleButton.textContent = 'Show more';
+            }
+        }
+
+        // Make functions globally available
+        window.addToGallery = addToGallery;
+        window.viewImage = viewImage;
+        window.downloadImage = downloadImage;
+        window.deleteImage = deleteImage;
+        window.deleteImageFromFirebase = deleteImageFromFirebase;
+        window.viewCommunityImage = viewCommunityImage;
+        window.togglePrompt = togglePrompt;
+        window.toggleCommunityPrompt = toggleCommunityPrompt;
+    </script>
+
+    <!-- Bootstrap JavaScript -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>

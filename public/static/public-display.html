@@ -1,0 +1,1222 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="description" content="">
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="style_home.css">
+    <link rel="stylesheet" type="text/css" href="styles.css">
+    <link rel="apple-touch-icon" sizes="180x180" href="favicon/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon/favicon-16x16.png">
+
+    <title>Public Display - Marble Run x LINK centre</title>
+    <style>
+        .modern-title {
+            font-size: 2rem;
+            letter-spacing: -1px;
+            font-weight: 250;
+            border-left: 5px solid #FF5E62;
+            padding-left: 15px;
+            margin-bottom: 15px;
+        }
+
+        /* Custom navbar styling */
+        .navbar {
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            height: 80px;
+        }
+
+        .navbar-light .navbar-nav .nav-link {
+            color: black;
+        }
+
+        .navbar-light .navbar-nav .nav-link:hover {
+            color: #724D00;
+        }
+
+        .navbar-light .navbar-nav .nav-link.active {
+            font-weight: bold;
+            color: #FF5E62;
+        }
+
+        .button-container {
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+            position: relative;
+            top: 300px;
+        }
+
+        .btn {
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 10px 20px;
+            margin: 0 10px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .btn:hover {
+            background-color: #0056b3;
+        }
+
+        h4.mb-3 {
+            font-weight: 600;
+            color: var(--text-color);
+            margin: 2rem 0;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            border: none;
+            padding: 0.75rem 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--hover-color);
+            transform: translateY(-1px);
+        }
+
+        @media (max-width: 576px) {
+            .container {
+                padding: 1rem;
+            }
+
+            .responsive-text {
+                font-size: 14px;
+            }
+
+            .button-container {
+                display: none;
+            }
+
+            .text-item h3 {
+                font-size: 16px;
+            }
+
+            .headline-container img {
+                width: 100%;
+                padding: 10%;
+            }
+        }
+
+        @media (min-width: 577px) and (max-width: 768px) {
+            .responsive-text {
+                font-size: 16px;
+            }
+
+            .button-container {
+                display: none;
+            }
+
+            .text-item h3 {
+                font-size: 18px;
+            }
+        }
+
+        @media (min-width: 769px) and (max-width: 992px) {
+            .responsive-text {
+                font-size: 18px;
+            }
+
+            .button-container {
+                display: none;
+            }
+
+            .text-item h3 {
+                font-size: 20px;
+            }
+        }
+
+        @media (min-width: 993px) and (max-width: 1200px) {
+            .responsive-text {
+                font-size: 20px;
+            }
+
+            .button-container {
+                display: none;
+            }
+        }
+
+        @media (min-width: 1201px) and (max-width: 1400px) {
+            .responsive-text {
+                font-size: 22px;
+            }
+
+            .button-container {
+                display: none;
+            }
+        }
+
+        @media (min-width: 1401px) and (max-width: 1600px) {
+            .responsive-text {
+                font-size: 24px;
+            }
+        }
+
+        @media (min-width: 1601px) and (max-width: 18000px) {
+            .responsive-text {
+                font-size: 26px;
+            }
+        }
+
+        .scrollable-textarea {
+            height: 200px;
+            overflow-y: auto;
+        }
+
+        #sectionTitle {
+            transition: opacity 0.3s ease;
+            margin-left: 1rem;
+            font-weight: 500;
+        }
+
+        .section-box {
+            background-color: #ffffff;
+            border-radius: 16px;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.05);
+            padding: 2rem;
+            margin: 1rem 0;
+            transition: all 0.3s ease;
+        }
+
+        .section-box:hover {
+            box-shadow: 0 6px 28px rgba(0, 0, 0, 0.08);
+            transform: translateY(-2px);
+        }
+
+        .section-box img.round {
+            border-radius: 12px;
+            transition: transform 0.3s ease;
+        }
+
+        .section-box {
+            background-color: transparent;
+            padding: 1.5rem;
+            border-radius: 12px;
+        }
+
+        @media (max-width: 768px) {
+            .section-box {
+                padding: 1rem;
+            }
+        }
+
+        li.active {
+            font-weight: bold;
+        }
+
+        .btn.rounded-pill:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            color: inherit !important;
+        }
+
+        .btn.btn-warning.rounded-pill {
+            color: white !important;
+        }
+
+        .btn.btn-warning.rounded-pill:hover {
+            color: white !important;
+        }
+
+        .btn.btn-info.rounded-pill {
+            color: white !important;
+        }
+
+        .btn.btn-info.rounded-pill:hover {
+            color: white !important;
+        }
+
+        .btn.btn-primary.rounded-pill {
+            color: white !important;
+        }
+
+        .btn.btn-primary.rounded-pill:hover {
+            color: white !important;
+        }
+
+        .card.mb-3 {
+            transition: box-shadow 0.3s ease, transform 0.2s ease;
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+            border-radius: 10px;
+        }
+
+        .card.mb-3:hover {
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            transform: translateY(-2px);
+        }
+
+        .card-header {
+            background-color: var(--secondary-color) !important;
+            border-bottom: 1px solid var(--border-color);
+            padding: 0.75rem 1.25rem;
+        }
+
+        .prompt-card .card-header {
+            border-top-left-radius: 10px;
+            border-top-right-radius: 10px;
+        }
+
+        .action-buttons {
+            opacity: 1;
+        }
+
+        .card-body:hover .action-buttons {
+            opacity: 1;
+        }
+
+        .action-buttons .btn {
+            width: 32px;
+            height: 32px;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+            border: none;
+        }
+
+        .action-buttons .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+        }
+
+        .action-buttons .btn i {
+            font-size: 0.8rem;
+        }
+
+        .copy-btn {
+            background-color: #f8f9fa;
+            color: #6c757d;
+            border: 1px solid #dee2e6 !important;
+        }
+
+        .copy-btn:hover {
+            background-color: #6c757d;
+            color: white;
+        }
+
+        .edit-btn {
+            background-color: #f8f9fa;
+            color: #0d6efd;
+            border: 1px solid #dee2e6 !important;
+        }
+
+        .edit-btn:hover {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .delete-btn {
+            background-color: #f8f9fa;
+            color: #dc3545;
+            border: 1px solid #dee2e6 !important;
+        }
+
+        .delete-btn:hover {
+            background-color: #dc3545;
+            color: white;
+        }
+
+        .btn-secondary {
+            background-color: #6c757d;
+        }
+
+        .btn-secondary:hover {
+            background-color: #5a6268;
+        }
+
+        .btn-primary {
+            background-color: #0d6efd;
+        }
+
+        .btn-primary:hover {
+            background-color: #0b5ed7;
+        }
+
+        .btn-danger {
+            background-color: #dc3545;
+        }
+
+        .btn-danger:hover {
+            background-color: #bb2d3b;
+        }
+
+        .card-body {
+            padding: 1.5rem;
+        }
+
+        .card-text {
+            font-size: 1.05rem;
+            line-height: 1.5;
+            color: #445566;
+        }
+
+        /* Dashboard Styles */
+        .dashboard-section {
+            margin-top: 3rem;
+            padding: 2rem 0;
+        }
+
+        .leaderboard-card {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            margin-bottom: 2rem;
+        }
+
+        .leaderboard-header {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 1.5rem;
+            text-align: center;
+        }
+
+        .leaderboard-title {
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .leaderboard-subtitle {
+            font-size: 1rem;
+            opacity: 0.9;
+            margin: 0.5rem 0 0 0;
+        }
+
+        .team-row {
+            display: flex;
+            align-items: center;
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid #f0f0f0;
+            transition: all 0.3s ease;
+        }
+
+        .team-row:hover {
+            background: #f8f9fa;
+        }
+
+        .team-row:last-child {
+            border-bottom: none;
+        }
+
+        .team-rank {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #667eea;
+            width: 50px;
+            text-align: center;
+        }
+
+        .team-rank.first {
+            color: #FFD700;
+        }
+
+        .team-rank.second {
+            color: #C0C0C0;
+        }
+
+        .team-rank.third {
+            color: #CD7F32;
+        }
+
+        .team-info {
+            flex: 1;
+            margin-left: 1rem;
+        }
+
+        .team-name {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #2c3e50;
+            margin: 0;
+        }
+
+        .team-members {
+            font-size: 0.9rem;
+            color: #6c757d;
+            margin: 0.2rem 0 0 0;
+        }
+
+        .team-score {
+            text-align: right;
+        }
+
+        .score-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .score-label {
+            font-size: 0.8rem;
+            color: #6c757d;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .achievement-badges {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .badge {
+            padding: 0.3rem 0.6rem;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .badge-quiz {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+
+        .badge-construction {
+            background: #f3e5f5;
+            color: #7b1fa2;
+        }
+
+        .badge-innovation {
+            background: #e8f5e8;
+            color: #388e3c;
+        }
+
+        .badge-teamwork {
+            background: #fff3e0;
+            color: #f57c00;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+        }
+
+        .stat-icon {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #2c3e50;
+            margin: 0;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: #6c757d;
+            margin: 0.5rem 0 0 0;
+        }
+
+        .refresh-btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border: none;
+            color: white;
+            padding: 0.8rem 2rem;
+            border-radius: 25px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            margin-bottom: 2rem;
+        }
+
+        .refresh-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: #6c757d;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .team-row {
+                flex-direction: column;
+                align-items: flex-start;
+                padding: 1rem;
+            }
+
+            .team-info {
+                margin-left: 0;
+                margin-top: 0.5rem;
+            }
+
+            .team-score {
+                text-align: left;
+                margin-top: 0.5rem;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Shared Navbar Container -->
+    <div id="navbar-container"></div>
+
+
+    <!-- Team Dashboard Section -->
+    <div class="container dashboard-section">
+        <div class="row">
+            <div class="col-12">
+
+
+                <!-- Leaderboard -->
+                <div class="leaderboard-card mt-4">
+                    <div class="leaderboard-header">
+                        <h3 class="leaderboard-title">🏆 Team Rankings</h3>
+                        <p class="leaderboard-subtitle">
+                            <button class="refresh-btn" onclick="refreshDashboard()">
+                                🔄 Refresh Scores
+                            </button>
+                            <span class="ms-3" style="color: white;">Last updated: <span
+                                    id="lastUpdated">Loading...</span></span>
+                        </p>
+                    </div>
+                    <div id="leaderboardContent">
+                        <div class="loading">
+                            <div class="spinner"></div>
+                            Loading team scores...
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Statistics Grid -->
+                <div class="stats-grid" id="statsGrid">
+                    <div class="stat-card">
+                        <div class="stat-icon">👥</div>
+                        <div class="stat-value" id="totalTeams">0</div>
+                        <div class="stat-label">Total Teams</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">🎯</div>
+                        <div class="stat-value" id="totalPoints">0</div>
+                        <div class="stat-label">Total Points</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">⭐</div>
+                        <div class="stat-value" id="avgScore">0</div>
+                        <div class="stat-label">Average Score</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">🏅</div>
+                        <div class="stat-value" id="topScore">0</div>
+                        <div class="stat-label">Highest Score</div>
+                    </div>
+                </div>
+
+                <!-- Admin Access Section -->
+                <div class="leaderboard-card mt-4" id="adminAccessSection">
+                    <div class="leaderboard-header">
+                        <h3 class="leaderboard-title">🔐 Admin Access</h3>
+                        <p class="leaderboard-subtitle">Enter admin passcode to access judge scoring controls</p>
+                    </div>
+                    <div style="padding: 1.5rem;">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="adminPasscode" class="form-label">Admin Passcode</label>
+                                    <input type="password" class="form-control" id="adminPasscode"
+                                        placeholder="Enter admin passcode">
+                                </div>
+                                <button class="btn btn-warning" onclick="checkAdminAccess()">
+                                    <i class="fas fa-unlock me-2"></i>Access Judge Controls
+                                </button>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="alert alert-warning">
+                                    <h6><i class="fas fa-shield-alt me-2"></i>Admin Access Required</h6>
+                                    <p class="mb-1">Only authorized judges can access scoring controls.</p>
+                                    <small class="text-muted">
+                                        • Enter the correct passcode to unlock judge controls<br>
+                                        • Judge controls allow modification of scoring parameters<br>
+                                        • All changes are logged for audit purposes
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Judge Input Section -->
+                <div class="leaderboard-card mt-4" id="judgeSection" style="display: none;">
+                    <div class="leaderboard-header">
+                        <h3 class="leaderboard-title">⚖️ Judge Scoring Input</h3>
+                        <p class="leaderboard-subtitle">Select user and enter the longest time (seconds) for scoring
+                            calculation</p>
+                    </div>
+                    <div style="padding: 1.5rem;">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="selectedUserId" class="form-label">Select User ID</label>
+                                    <select class="form-control" id="selectedUserId">
+                                        <option value="">Select a user...</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="longestTime" class="form-label">Longest Time (seconds)</label>
+                                    <input type="number" class="form-control" id="longestTime"
+                                        placeholder="Enter longest time in seconds" min="0">
+                                </div>
+                                <button class="btn btn-primary" onclick="updateScoring()">
+                                    <i class="fas fa-calculator me-2"></i>Update Scoring
+                                </button>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="alert alert-info">
+                                    <h6><i class="fas fa-info-circle me-2"></i>Scoring Formula</h6>
+                                    <p class="mb-1"><strong>Score = (Longest Time × 2000) ÷ (Total Consumed Tokens) +
+                                            Total Remaining Tokens × 5</strong></p>
+                                    <small class="text-muted">
+                                        • Tokens earned from Question Booth quizzes<br>
+                                        • Consumed tokens from Redemption Booth<br>
+                                        • Remaining tokens = Earned - Consumed<br>
+                                        • Judge selects specific user for scoring
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"
+        integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj"
+        crossorigin="anonymous"></script>
+
+    <script src="https://kit.fontawesome.com/e067495424.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"
+        integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN"
+        crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.12.9/dist/umd/popper.min.js"
+        integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q"
+        crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/js/bootstrap.min.js"
+        integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl"
+        crossorigin="anonymous"></script>
+
+    <!-- Modal Structure -->
+    <div class="modal fade" id="imageModal" tabindex="-1" aria-labelledby="imageModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-fullscreen">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="imageModalLabel">工作坊花絮</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body d-flex justify-content-center align-items-center">
+                    <img id="modalImage" class="img-fluid" src="" alt="" style="max-height: 90vh; max-width: 90vw;">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">關閉</button>
+                    <button type="button" class="btn btn-primary" id="prevBtn" onclick="changeImage(-1)">上一張</button>
+                    <button type="button" class="btn btn-primary" id="nextBtn" onclick="changeImage(1)">下一張</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="loginModal" tabindex="-1" aria-labelledby="loginModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="loginModalLabel">登入</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="loginForm">
+                        <div class="mb-3 mx-4">
+                            <label for="passcode" class="mt-4 form-label">密碼 (4位)</label>
+                            <input type="text" class="form-control" id="passcode" maxlength="4" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary mx-4 mb-4">確認</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="script.js"></script>
+    <script>
+        // Team Dashboard Data - loaded dynamically from server
+        let TEAM_DATA = [];
+        let LONGEST_TIME = 0; // Judge input for longest time
+        let TEAM_TOKENS = {}; // Track tokens for each team
+
+        function renderLeaderboard() {
+            const leaderboardContent = document.getElementById('leaderboardContent');
+            if (!leaderboardContent) return;
+
+            // Calculate scores using new formula
+            const teamsWithScores = TEAM_DATA.map(team => {
+                const teamTokens = TEAM_TOKENS[team.id] || { earned: 0, consumed: 0 };
+                const remainingTokens = teamTokens.earned - teamTokens.consumed;
+
+                // Get user-specific longest time, fallback to global LONGEST_TIME, then default to 60 seconds
+                const userLongestTime = (window.USER_LONGEST_TIMES && window.USER_LONGEST_TIMES[team.id]) || LONGEST_TIME || 60;
+
+                let calculatedScore = 0;
+                // Always apply the formula, using default longest time if needed
+                // New formula: (Longest Time × 2000) ÷ (Total Consumed Tokens) + Total Remaining Tokens × 5
+                const consumedTokens = teamTokens.consumed || 0;
+                const remainingTokensValue = remainingTokens || 0;
+
+                // Use 1 as default if no consumed tokens
+                const divisor = consumedTokens > 0 ? consumedTokens : 1;
+                calculatedScore = (userLongestTime * 2000) / divisor + (remainingTokensValue * 5);
+
+                // Debug logging
+                console.log(`Team ${team.name} (${team.id}):`, {
+                    travellingSeconds: userLongestTime,
+                    earnedTokens: teamTokens.earned,
+                    consumedTokens,
+                    remainingTokens: remainingTokensValue,
+                    divisor,
+                    calculatedScore,
+                    teamTokens: teamTokens
+                });
+
+                return {
+                    ...team,
+                    calculatedScore: Math.round(calculatedScore * 100) / 100, // Round to 2 decimal places
+                    earnedTokens: teamTokens.earned,
+                    consumedTokens: teamTokens.consumed,
+                    remainingTokens: remainingTokens
+                };
+            });
+
+            // Sort teams by calculated score (descending)
+            const sortedTeams = teamsWithScores.sort((a, b) => b.calculatedScore - a.calculatedScore);
+
+            let html = '';
+            sortedTeams.forEach((team, index) => {
+                const rank = index + 1;
+                const rankClass = rank === 1 ? 'first' : rank === 2 ? 'second' : rank === 3 ? 'third' : '';
+
+                // Get user-specific longest time for this team
+                const teamLongestTime = (window.USER_LONGEST_TIMES && window.USER_LONGEST_TIMES[team.id]) || LONGEST_TIME || 60;
+
+                html += `
+                    <div class="team-row">
+                        <div class="team-rank ${rankClass}">${rank}</div>
+                        <div class="team-info">
+                            <h4 class="team-name">${team.name}</h4>
+                            <p class="team-members">${team.members.join(', ')}</p>
+                            <div class="achievement-badges">
+                                <span class="badge badge-quiz">Earned: ${team.earnedTokens} tokens</span>
+                                <span class="badge badge-construction">Consumed: ${team.consumedTokens} tokens</span>
+                                <span class="badge badge-innovation">Remaining: ${team.remainingTokens} tokens</span>
+                                <span class="badge badge-teamwork">Travelling: ${teamLongestTime}s</span>
+                            </div>
+                        </div>
+                        <div class="team-score">
+                            <div class="score-value">${team.calculatedScore}</div>
+                            <div class="score-label">Score</div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            leaderboardContent.innerHTML = html;
+        }
+
+        function updateStatistics() {
+            const totalTeams = TEAM_DATA.length;
+
+            // Calculate new statistics based on calculated scores
+            const teamsWithScores = TEAM_DATA.map(team => {
+                const teamTokens = TEAM_TOKENS[team.id] || { earned: 0, consumed: 0 };
+                const remainingTokens = teamTokens.earned - teamTokens.consumed;
+
+                // Get user-specific longest time, fallback to global LONGEST_TIME, then default to 60 seconds
+                const userLongestTime = (window.USER_LONGEST_TIMES && window.USER_LONGEST_TIMES[team.id]) || LONGEST_TIME || 60;
+
+                let calculatedScore = 0;
+                // Always apply the formula, using default longest time if needed
+                // New formula: (Longest Time × 2000) ÷ (Total Consumed Tokens) + Total Remaining Tokens × 5
+                const consumedTokens = teamTokens.consumed || 0;
+                const remainingTokensValue = remainingTokens || 0;
+
+                // Use 1 as default if no consumed tokens
+                const divisor = consumedTokens > 0 ? consumedTokens : 1;
+                calculatedScore = (userLongestTime * 2000) / divisor + (remainingTokensValue * 5);
+                return calculatedScore;
+            });
+
+            const totalPoints = teamsWithScores.reduce((sum, score) => sum + score, 0);
+            const avgScore = totalTeams > 0 ? Math.round(totalPoints / totalTeams * 100) / 100 : 0;
+            const topScore = teamsWithScores.length > 0 ? Math.round(Math.max(...teamsWithScores) * 100) / 100 : 0;
+
+            document.getElementById('totalTeams').textContent = totalTeams;
+            document.getElementById('totalPoints').textContent = Math.round(totalPoints * 100) / 100;
+            document.getElementById('avgScore').textContent = avgScore;
+            document.getElementById('topScore').textContent = topScore;
+        }
+
+        // Function to check admin access
+        function checkAdminAccess() {
+            const adminPasscodeInput = document.getElementById('adminPasscode');
+            const adminPasscode = adminPasscodeInput.value;
+
+            if (adminPasscode === 'PH46') {
+                // Hide admin access section
+                document.getElementById('adminAccessSection').style.display = 'none';
+                // Show judge section
+                document.getElementById('judgeSection').style.display = 'block';
+                // Populate user dropdown
+                populateUserDropdown();
+                alert('Admin access granted! Judge controls unlocked.');
+            } else {
+                alert('Invalid admin passcode! Access denied.');
+            }
+        }
+
+        // Function to populate user dropdown
+        function populateUserDropdown() {
+            const userSelect = document.getElementById('selectedUserId');
+            if (!userSelect) return;
+
+            // Clear existing options except the first one
+            userSelect.innerHTML = '<option value="">Select a user...</option>';
+
+            // Add users from TEAM_DATA
+            if (TEAM_DATA && TEAM_DATA.length > 0) {
+                TEAM_DATA.forEach(team => {
+                    const option = document.createElement('option');
+                    option.value = team.id;
+                    option.textContent = `${team.name} (ID: ${team.id})`;
+                    userSelect.appendChild(option);
+                });
+            }
+        }
+
+        // Function to update scoring when judge inputs longest time
+        async function updateScoring() {
+            const selectedUserId = document.getElementById('selectedUserId').value;
+            const longestTimeInput = document.getElementById('longestTime');
+            const longestTime = parseFloat(longestTimeInput.value);
+
+            if (!selectedUserId) {
+                alert('Please select a user first');
+                return;
+            }
+
+            if (isNaN(longestTime) || longestTime < 0) {
+                alert('Please enter a valid longest time (positive number)');
+                return;
+            }
+
+            try {
+                // Upload to Firebase
+                const response = await fetch('/api/judge-scoring', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        teamId: selectedUserId,
+                        longestTime: longestTime,
+                        judgePasscode: 'PH46'
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    console.log('Judge scoring uploaded to Firebase successfully');
+
+                    // Store the longest time for the selected user locally
+                    if (!window.USER_LONGEST_TIMES) {
+                        window.USER_LONGEST_TIMES = {};
+                    }
+                    window.USER_LONGEST_TIMES[selectedUserId] = longestTime;
+
+                    console.log('Updated longest time for user', selectedUserId, ':', longestTime);
+
+                    // Re-render leaderboard with new scoring
+                    renderLeaderboard();
+                    updateStatistics();
+
+                    alert(`Scoring updated and saved to Firebase for user ${selectedUserId} with longest time: ${longestTime} seconds`);
+                } else {
+                    console.error('Failed to upload judge scoring:', data.error);
+                    alert('Failed to save scoring to Firebase: ' + data.error);
+                }
+            } catch (error) {
+                console.error('Error uploading judge scoring:', error);
+                alert('Failed to save scoring to Firebase. Please try again.');
+            }
+        }
+
+        async function refreshDashboard() {
+            const leaderboardContent = document.getElementById('leaderboardContent');
+            leaderboardContent.innerHTML = `
+                <div class="loading">
+                    <div class="spinner"></div>
+                    Refreshing scores...
+                </div>
+            `;
+
+            // Reload team data from server
+            await loadDashboardData();
+        }
+
+        // Function to update team score (for teachers to use)
+        async function updateTeamScore(teamId, scoreType, score, achievements = null) {
+            try {
+                console.log('Updating team score:', { teamId, scoreType, score, achievements });
+                const response = await fetch('/api/update-team-score', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        teamId,
+                        scoreType,
+                        score,
+                        achievements
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    console.log('Team score updated successfully');
+                    // Refresh dashboard to show updated scores
+                    await refreshDashboard();
+                    return true;
+                } else {
+                    console.error('Failed to update team score:', data.error);
+                    alert('Failed to update team score: ' + data.error);
+                    return false;
+                }
+            } catch (error) {
+                console.error('Update team score error:', error);
+                alert('Failed to update team score. Please try again.');
+                return false;
+            }
+        }
+
+        // Make updateTeamScore available globally for teachers
+        window.updateTeamScore = updateTeamScore;
+
+        async function loadDashboardData() {
+            try {
+                console.log('Loading team data from server...');
+
+                // Load teams data
+                const teamsResponse = await fetch('/api/teams', { credentials: 'include' });
+                const teamsData = await teamsResponse.json();
+
+                // Load team progress (includes token data)
+                const progressResponse = await fetch('/api/team-progress', { credentials: 'include' });
+                const progressData = await progressResponse.json();
+
+                // Load token consumption data
+                const consumptionResponse = await fetch('/api/token-consumption', { credentials: 'include' });
+                const consumptionData = await consumptionResponse.json();
+
+                // Load judge scoring data
+                const judgeScoringResponse = await fetch('/api/judge-scoring', { credentials: 'include' });
+                const judgeScoringData = await judgeScoringResponse.json();
+
+                if (teamsData.teams) {
+                    TEAM_DATA = teamsData.teams;
+                    console.log('Loaded teams:', TEAM_DATA.length);
+                    console.log('Team data:', TEAM_DATA);
+
+                    // Process token data from team progress
+                    if (progressData.teamProgress) {
+                        console.log('Processing team progress data:', progressData.teamProgress);
+                        progressData.teamProgress.forEach(team => {
+                            TEAM_TOKENS[team.id] = {
+                                earned: team.totalTokens || 0,
+                                consumed: 0
+                            };
+                            console.log('Initialized team tokens for team', team.id, ':', TEAM_TOKENS[team.id]);
+                        });
+                    }
+
+                    // Process consumed tokens from redemption booth
+                    if (consumptionData.consumptionData) {
+                        console.log('Processing consumed tokens:', consumptionData.consumptionData);
+                        consumptionData.consumptionData.forEach(consumption => {
+                            console.log('Processing consumption for teamId:', consumption.teamId, 'tokens:', consumption.tokensConsumed);
+
+                            // Find the team that matches this consumption by createdBy/userId
+                            let targetTeamId = null;
+                            TEAM_DATA.forEach(team => {
+                                if (team.createdBy === consumption.teamId || team.userId === consumption.teamId) {
+                                    targetTeamId = team.id;
+                                    console.log('Found matching team for consumption:', team.id, 'createdBy:', team.createdBy, 'userId:', team.userId);
+                                }
+                            });
+
+                            if (targetTeamId && TEAM_TOKENS[targetTeamId]) {
+                                TEAM_TOKENS[targetTeamId].consumed += consumption.tokensConsumed;
+                                console.log('Updated consumed tokens for team', targetTeamId, ':', TEAM_TOKENS[targetTeamId].consumed);
+                            } else {
+                                console.log('No team tokens found for consumption teamId:', consumption.teamId, 'targetTeamId:', targetTeamId);
+                            }
+                        });
+                    }
+
+                    // Process judge scoring data
+                    if (judgeScoringData.success && judgeScoringData.scoringData) {
+                        if (!window.USER_LONGEST_TIMES) {
+                            window.USER_LONGEST_TIMES = {};
+                        }
+                        judgeScoringData.scoringData.forEach(scoring => {
+                            window.USER_LONGEST_TIMES[scoring.teamId] = scoring.longestTime;
+                        });
+                        console.log('Loaded judge scoring data:', window.USER_LONGEST_TIMES);
+                    }
+
+                    console.log('Final token data loaded:', TEAM_TOKENS);
+                    console.log('Judge scoring data loaded:', window.USER_LONGEST_TIMES);
+                    console.log('About to render leaderboard...');
+                    renderLeaderboard();
+                    updateStatistics();
+
+                    // Update last updated time
+                    const lastUpdatedElement = document.getElementById('lastUpdated');
+                    if (lastUpdatedElement) {
+                        lastUpdatedElement.textContent = new Date().toLocaleTimeString();
+                    }
+                } else {
+                    console.error('No teams data received');
+                    // Show empty state
+                    const leaderboardContent = document.getElementById('leaderboardContent');
+                    if (leaderboardContent) {
+                        leaderboardContent.innerHTML = `
+                            <div class="loading">
+                                <p>No teams registered yet. Teams will appear here after registration.</p>
+                            </div>
+                        `;
+                    }
+                }
+            } catch (error) {
+                console.error('Failed to load team data:', error);
+                // Show error state
+                const leaderboardContent = document.getElementById('leaderboardContent');
+                if (leaderboardContent) {
+                    leaderboardContent.innerHTML = `
+                        <div class="loading">
+                            <p>Failed to load team data. Please refresh the page.</p>
+                        </div>
+                    `;
+                }
+            }
+        }
+
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', function () {
+            // Set active navbar item
+            setTimeout(function () {
+                const publicDisplayLink = document.querySelector('a[href="public-display.html"]');
+                if (publicDisplayLink) {
+                    publicDisplayLink.classList.add('active');
+                }
+            }, 100);
+
+            // Load dashboard data
+            loadDashboardData();
+
+            // Auto-refresh every 30 seconds
+            setInterval(function () {
+                console.log('Auto-refreshing dashboard...');
+                refreshDashboard();
+            }, 30000);
+
+            // Listen for token purchase updates from redemption booth
+            window.addEventListener('tokenPurchaseUpdate', function (event) {
+                console.log('Token purchase update received:', event.detail);
+                console.log('Refreshing public display due to token purchase...');
+                refreshDashboard();
+            });
+
+            // Listen for localStorage updates (for cross-tab communication)
+            window.addEventListener('storage', function (event) {
+                if (event.key === 'publicDisplayUpdate') {
+                    try {
+                        const updateData = JSON.parse(event.newValue);
+                        if (updateData && updateData.type === 'TOKEN_PURCHASE_UPDATE') {
+                            console.log('Token purchase update received via localStorage:', updateData);
+                            console.log('Refreshing public display due to token purchase...');
+                            refreshDashboard();
+                        }
+                    } catch (error) {
+                        console.error('Error parsing public display update:', error);
+                    }
+                }
+            });
+        });
+    </script>
+
+</body>
+
+</html>
