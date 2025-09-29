@@ -10,13 +10,13 @@ services:
         value: production
       - key: PORT
         value: 10000
-      # Firebase Configuration
+      # Firebase Configuration - Set these in Render dashboard
       - key: FIREBASE_PRIVATE_KEY
-        value: "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCkRMzzzxUrqO/6\nhZY0cqxS7bSXmbWDTwCl8rZnJyz7NR3etGOioJZBqbo6S/ze1IfsvxQGpLlIIDG2\nsyWUZD45rz7fTOeSoyPRg4+pSRWyGFau1fjYycaf8V3AG1dfc2SaYj2T/dJDE+U0\ncCf5Oushvdyix9+5CvsBSY0u9oZ/P0sOP4nIWl+oFl6JSkbDO/WAPrs9HJ/QXlOK\nk+lzELLkBoI+jjgfx96yRNLaw6Cq58EoMOl/yUsK706xzg/+ZWdaNMvhQA0Y4Zx0\nXFRDVx2UzPGOs235E8Km1POceoUh2kR/RjcLsBPOjh4cIXd+J8Fo9d+l6FqvNvX6\n7JBd+E/dAgMBAAECggEAHfZ2s9oH8IjGDRokxbhM+mtlT2m4FBVq9toIr1QT/lY3\n9pFMwzMrdRqyX0PRAgweJu7LhlKxgRhuOPcAWcrXFsqCW1S5wKOFOwgWQjiUfoG1\n/foFg/V6B16NTScvjreLmCVnOgFIQvf0DNaQVAONNABfqElw412/XwK9f91ztu3X\nfLo7GVrCBsjCehTyiVavPwSuPzlB3LEJiyezJLhd4Evo5I55dgjCf1f5oOwMDgvY\n1X3tZal4+LITyQfzXH5NIk9Ch7G0vSavkPxukUwhPRjuxje2vIH9Iyi80vU6Z5KQ\nqjNLcGR/Hj6lUDf+rWaWlaJLYvD6d9BJ5iLI2QC3+QKBgQDfMrKat4xsxVEiCDjA\njeJP3Ha7gIVDwns5lzkN4U4OboUa6IgzLp28XCstpcFG1m/ZwYWDx/+qTZ15t/9F\nyM9q2sq/LAjrNirP6rlfSaNTlV++6KlestWuMKEKOxq6VSi9Jy9sR4CsK41dkP2p\nKiubcO4qPYQj/n13OiqAmtgyGwKBgQC8aQbggxSMGgFi/bfzopXlw5A0w2l26QiH\nzsAwaIZS5RWdorRMM6IigWRdRlzU4YisvKhWWbZiHgJe0xgmlgFfCdXLSOQd7UNE\n0E633I/4kko1MZ1VpAbK+3PF1lgYph/7/7rXiWE6Q1LpQdQJJdQ684OYr0TJ1xW3\nUsvvNx7lZwKBgQCR/AXnvh/h0Nk1Ki18fBDG7UrXbsM7Q4v3ahqOIow8UjtLE0Zq\nO5Y96gbvz1dwLrdvtOzP+dMWH7fdMeSMT0CjAkHT8khPF9m+riba1T43YB8ErgaB\ngvTR/sqF94yOzT5dIbEZ4FafxcirpzbSG1v0SlPsWtn/9Oc5QVklTqITewKBgD/O\nxfB1FBlamUugJ5NQZbmZoJXt9CK8SxJLV9VNIOikAs0PFEaWWfubnJTmRnwmIXZ2\nsgAEg/r4tM7OaOhwduhr2UbuWas09kowzegAv5VsXctkESe21EIcJJpEvDMk18It\nWmaydQYZVNQAYkHy2MxaOiAUg5Rjzkv2s3BBV6pTAoGARm8NE2191RL0NqHLkGZd\n/vzlW6KxGLRoTunuhsbOZQlSvGphGOET2fyhCrSA8f6E7sV4rBSwMfEePWG4NE8Y\nxaQS2WxsVEdIQmLeU+z2h9sEysTqgp307z3qAJCXrXmeK20jON2Uvp7MrgrvkQ45\nKNXdjC296hFdu1Uf8lizCn8=\n-----END PRIVATE KEY-----\n"
+        fromSecret: FIREBASE_PRIVATE_KEY
       - key: FIREBASE_CLIENT_EMAIL
-        value: "firebase-adminsdk-fbsvc@link-251004.iam.gserviceaccount.com"
+        fromSecret: FIREBASE_CLIENT_EMAIL
       - key: FIREBASE_PRIVATE_KEY_ID
-        value: "a353b8548272b7e79d8117cecfed50a3a95103aa"
+        fromSecret: FIREBASE_PRIVATE_KEY_ID
       - key: FIREBASE_CLIENT_ID
-        value: "102683101960259926043"
+        fromSecret: FIREBASE_CLIENT_ID
     healthCheckPath: /api/test

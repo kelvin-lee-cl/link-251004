@@ -53,14 +53,14 @@ app.use(express.urlencoded({ extended: true }));
 
 // Session configuration
 app.use(session({
-    secret: 'link-stem-workshop-2025',
-    resave: true, // Force session save even if unmodified
-    saveUninitialized: true, // Save new sessions
+    secret: process.env.SESSION_SECRET || 'link-stem-workshop-2025',
+    resave: false, // Don't save session if unmodified
+    saveUninitialized: false, // Don't create session until something stored
     name: 'sessionId', // Custom session name
     rolling: true, // Reset expiration on each request
     cookie: {
-        secure: false, // Set to true if using HTTPS
-        httpOnly: false, // Allow JavaScript access for development (set to true in production)
+        secure: process.env.NODE_ENV === 'production', // HTTPS only in production
+        httpOnly: true, // Prevent XSS attacks
         maxAge: 24 * 60 * 60 * 1000, // 24 hours
         sameSite: 'lax', // CSRF protection
         path: '/' // Ensure cookie is available for all paths
@@ -111,6 +111,11 @@ try {
 // Initialize in-memory storage as fallback
 if (!global.teamsData) {
     global.teamsData = [];
+}
+
+// Initialize user login tracking storage
+if (!global.userLoginData) {
+    global.userLoginData = [];
 }
 
 // Log all requests
@@ -228,11 +233,36 @@ app.post('/api/login', (req, res) => {
     if (userId) {
         req.session.userId = userId;
 
+        // Track login time
+        const loginData = {
+            userId: userId,
+            passcode: passcode.toUpperCase(),
+            loginTime: new Date().toISOString(),
+            sessionId: req.sessionID
+        };
+
+        // Save to Firebase or memory
+        if (db) {
+            try {
+                db.collection('userLogins').add(loginData);
+                console.log('Login tracked in Firebase for user:', userId);
+            } catch (firebaseError) {
+                console.warn('Firebase login tracking failed:', firebaseError.message);
+                if (!global.userLoginData) global.userLoginData = [];
+                global.userLoginData.push(loginData);
+            }
+        } else {
+            if (!global.userLoginData) global.userLoginData = [];
+            global.userLoginData.push(loginData);
+            console.log('Login tracked in memory for user:', userId);
+        }
+
         // Determine user type based on User ID
         const userType = parseInt(userId) <= 16 ? 'marble_run' : 'individual';
         const userRole = userType === 'marble_run' ? 'Marble Run Game Participant' : 'Individual User';
+        const isAdmin = userId === '201'; // M514 is admin user
 
-        console.log(`User ${userId} logged in successfully as ${userRole}`);
+        console.log(`User ${userId} logged in successfully as ${userRole}${isAdmin ? ' (ADMIN)' : ''}`);
         console.log('Session ID after login:', req.sessionID);
         console.log('Session data after login:', req.session);
         res.json({
@@ -240,6 +270,8 @@ app.post('/api/login', (req, res) => {
             userId: userId,
             userType: userType,
             userRole: userRole,
+            isAdmin: isAdmin,
+            redirectTo: isAdmin ? '/question-booth.html' : null,
             message: 'Login successful'
         });
     } else {
@@ -266,13 +298,15 @@ app.get('/api/auth-status', (req, res) => {
         const userId = req.session.userId;
         const userType = parseInt(userId) <= 16 ? 'marble_run' : 'individual';
         const userRole = userType === 'marble_run' ? 'Marble Run Game Participant' : 'Individual User';
+        const isAdmin = userId === '201'; // M514 is admin user
 
-        console.log(`User ${userId} is authenticated as ${userRole}`);
+        console.log(`User ${userId} is authenticated as ${userRole}${isAdmin ? ' (ADMIN)' : ''}`);
         res.json({
             authenticated: true,
             userId: userId,
             userType: userType,
-            userRole: userRole
+            userRole: userRole,
+            isAdmin: isAdmin
         });
     } else {
         console.log('User is not authenticated');
@@ -1382,6 +1416,15 @@ app.post('/api/admin-reset', async (req, res) => {
             });
             await judgeScoringBatch.commit();
 
+            // Clear user logins
+            const userLoginsRef = db.collection('userLogins');
+            const userLoginsSnapshot = await userLoginsRef.get();
+            const userLoginsBatch = db.batch();
+            userLoginsSnapshot.docs.forEach(doc => {
+                userLoginsBatch.delete(doc.ref);
+            });
+            await userLoginsBatch.commit();
+
             console.log('Firebase data cleared successfully');
         }
 
@@ -1389,6 +1432,7 @@ app.post('/api/admin-reset', async (req, res) => {
         global.quizResultsData = [];
         global.teamsData = [];
         global.judgeScoring = [];
+        global.userLoginData = [];
 
         res.json({
             success: true,
@@ -1404,6 +1448,279 @@ app.post('/api/admin-reset', async (req, res) => {
         });
     }
 });
+
+// Get user login history endpoint (admin only)
+app.get('/api/admin/user-logins', requireAuth, async (req, res) => {
+    try {
+        const currentUserId = req.session.userId;
+
+        // Check if current user is admin
+        if (currentUserId !== '201') {
+            return res.status(403).json({
+                success: false,
+                error: 'Admin access required'
+            });
+        }
+
+        let loginHistory = [];
+
+        // Try Firebase first
+        if (db) {
+            try {
+                const snapshot = await db.collection('userLogins')
+                    .orderBy('loginTime', 'desc')
+                    .get();
+
+                loginHistory = snapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                }));
+                console.log('User login history loaded from Firebase:', loginHistory.length, 'records');
+            } catch (firebaseError) {
+                console.warn('Firebase read failed:', firebaseError.message);
+            }
+        }
+
+        // Fallback to memory storage
+        if (loginHistory.length === 0 && global.userLoginData) {
+            loginHistory = global.userLoginData;
+            console.log('User login history loaded from memory:', loginHistory.length, 'records');
+        }
+
+        // Group by user and get latest login for each
+        const userLatestLogins = {};
+        loginHistory.forEach(login => {
+            const userId = login.userId;
+            if (!userLatestLogins[userId] || new Date(login.loginTime) > new Date(userLatestLogins[userId].loginTime)) {
+                userLatestLogins[userId] = login;
+            }
+        });
+
+        const uniqueUsers = Object.values(userLatestLogins).sort((a, b) =>
+            new Date(b.loginTime) - new Date(a.loginTime)
+        );
+
+        res.json({
+            success: true,
+            users: uniqueUsers
+        });
+
+    } catch (error) {
+        console.error('Get user login history error:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to get user login history'
+        });
+    }
+});
+
+// Update user passkey endpoint (admin only)
+app.post('/api/admin/update-passkey', requireAuth, async (req, res) => {
+    try {
+        const currentUserId = req.session.userId;
+        const { userId, newPasscode } = req.body;
+
+        // Check if current user is admin
+        if (currentUserId !== '201') {
+            return res.status(403).json({
+                success: false,
+                error: 'Admin access required'
+            });
+        }
+
+        if (!userId || !newPasscode) {
+            return res.status(400).json({
+                success: false,
+                error: 'User ID and new passcode are required'
+            });
+        }
+
+        // Validate passcode format (4 characters, alphanumeric)
+        if (!/^[A-Z0-9]{4}$/.test(newPasscode.toUpperCase())) {
+            return res.status(400).json({
+                success: false,
+                error: 'Passcode must be exactly 4 alphanumeric characters'
+            });
+        }
+
+        const upperPasscode = newPasscode.toUpperCase();
+
+        // Check if passcode is already in use
+        const existingUserId = passcodeToUser[upperPasscode];
+        if (existingUserId && existingUserId !== userId) {
+            return res.status(400).json({
+                success: false,
+                error: 'This passcode is already assigned to another user'
+            });
+        }
+
+        // Update the passcode mapping
+        passcodeToUser[upperPasscode] = userId;
+
+        console.log(`Admin updated passcode for user ${userId} to ${upperPasscode}`);
+
+        res.json({
+            success: true,
+            message: 'Passcode updated successfully'
+        });
+
+    } catch (error) {
+        console.error('Update passkey error:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to update passcode'
+        });
+    }
+});
+
+// Get all available passcodes (admin only)
+app.get('/api/admin/passcodes', requireAuth, async (req, res) => {
+    try {
+        const currentUserId = req.session.userId;
+
+        // Check if current user is admin
+        if (currentUserId !== '201') {
+            return res.status(403).json({
+                success: false,
+                error: 'Admin access required'
+            });
+        }
+
+        // Convert passcodeToUser mapping to array format for frontend
+        const passcodes = Object.entries(passcodeToUser).map(([passcode, userId]) => ({
+            passcode,
+            userId
+        })).sort((a, b) => a.passcode.localeCompare(b.passcode));
+
+        res.json({
+            success: true,
+            passcodes
+        });
+
+    } catch (error) {
+        console.error('Get passcodes error:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to get passcodes'
+        });
+    }
+});
+
+// Export user credentials as CSV (admin only)
+app.get('/api/admin/export-csv', requireAuth, async (req, res) => {
+    try {
+        const currentUserId = req.session.userId;
+
+        // Check if current user is admin
+        if (currentUserId !== '201') {
+            return res.status(403).json({
+                success: false,
+                error: 'Admin access required'
+            });
+        }
+
+        // Create CSV content
+        const csvHeader = 'User ID,Password\n';
+        const csvRows = Object.entries(passcodeToUser).map(([passcode, userId]) =>
+            `${userId},${passcode}`
+        ).join('\n');
+
+        const csvContent = csvHeader + csvRows;
+
+        // Set headers for CSV download
+        res.setHeader('Content-Type', 'text/csv');
+        res.setHeader('Content-Disposition', `attachment; filename="user_credentials_${new Date().toISOString().split('T')[0]}.csv"`);
+        res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+
+        // Send CSV content
+        res.send(csvContent);
+
+        console.log('User credentials CSV exported successfully');
+
+    } catch (error) {
+        console.error('Export CSV error:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to export CSV'
+        });
+    }
+});
+
+// Randomize all passcodes (admin only)
+app.post('/api/admin/randomize-passcodes', requireAuth, async (req, res) => {
+    try {
+        const currentUserId = req.session.userId;
+
+        // Check if current user is admin
+        if (currentUserId !== '201') {
+            return res.status(403).json({
+                success: false,
+                error: 'Admin access required'
+            });
+        }
+
+        // Generate random passcodes for all users except admin (M514)
+        const newPasscodeToUser = {};
+
+        // Preserve M514 for admin user
+        newPasscodeToUser['M514'] = '201';
+
+        // Generate random passcodes for all other users
+        Object.entries(passcodeToUser).forEach(([passcode, userId]) => {
+            if (passcode !== 'M514') {
+                const newPasscode = generateRandomPasscode();
+                newPasscodeToUser[newPasscode] = userId;
+                console.log(`Changed passcode for user ${userId} from ${passcode} to ${newPasscode}`);
+            }
+        });
+
+        // Update the global passcode mapping
+        Object.keys(passcodeToUser).forEach(passcode => {
+            delete passcodeToUser[passcode];
+        });
+        Object.assign(passcodeToUser, newPasscodeToUser);
+
+        console.log('All passcodes randomized successfully (except M514)');
+
+        res.json({
+            success: true,
+            message: 'All passcodes randomized successfully',
+            randomizedCount: Object.keys(newPasscodeToUser).length - 1 // Exclude M514
+        });
+
+    } catch (error) {
+        console.error('Randomize passcodes error:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to randomize passcodes'
+        });
+    }
+});
+
+// Helper function to generate random passcode with 2 letters and 2 numbers
+function generateRandomPasscode() {
+    // Safe letters (excluding confusing ones: I, O, 0, q, Q, L)
+    const safeLetters = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+    const numbers = '123456789';
+
+    // Generate 2 random letters and 2 random numbers
+    const letters = [];
+    const nums = [];
+
+    for (let i = 0; i < 2; i++) {
+        letters.push(safeLetters[Math.floor(Math.random() * safeLetters.length)]);
+        nums.push(numbers[Math.floor(Math.random() * numbers.length)]);
+    }
+
+    // Combine and shuffle
+    const combined = [...letters, ...nums];
+    for (let i = combined.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [combined[i], combined[j]] = [combined[j], combined[i]];
+    }
+
+    return combined.join('');
+}
 
 // Track token consumption from redemption booth
 app.post('/api/consume-tokens', async (req, res) => {

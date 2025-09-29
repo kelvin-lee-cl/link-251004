@@ -250,8 +250,14 @@ document.addEventListener('DOMContentLoaded', function () {
                             teamRegistrationStep.classList.remove('d-none');
                         }
                     } else {
-                        // Individual users go directly to their dashboard
-                        window.location.href = 'index.html';
+                        // Check if user is admin and redirect accordingly
+                        if (data.isAdmin) {
+                            // Admin users go directly to admin panel
+                            window.location.href = 'question-booth.html';
+                        } else {
+                            // Individual users go to their dashboard
+                            window.location.href = 'index.html';
+                        }
                     }
                 } else {
                     alert('Wrong Password！');

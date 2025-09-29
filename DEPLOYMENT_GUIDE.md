@@ -1,105 +1,96 @@
-# 🚀 Deployment Guide for Marble Run x LINK Centre
+# 🚀 Deployment Guide - Marble Run Link Centre
 
 ## Deploy to Render.com
 
-### Prerequisites
+### 1. Prerequisites
 - GitHub repository with your code
-- Firebase project with credentials
 - Render.com account
+- Firebase project with Firestore enabled
 
-### Step 1: Prepare Environment Variables
+### 2. Environment Variables Setup
 
-You'll need to set these environment variables in Render:
+In your Render.com dashboard, set these environment variables:
 
-```
-FIREBASE_PROJECT_ID=your-project-id
-FIREBASE_PRIVATE_KEY_ID=your-private-key-id
-FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nyour-private-key\n-----END PRIVATE KEY-----\n"
-FIREBASE_CLIENT_EMAIL=your-client-email
-FIREBASE_CLIENT_ID=your-client-id
-FIREBASE_AUTH_URI=https://accounts.google.com/o/oauth2/auth
-FIREBASE_TOKEN_URI=https://oauth2.googleapis.com/token
-FIREBASE_AUTH_PROVIDER_X509_CERT_URL=https://www.googleapis.com/oauth2/v1/certs
-FIREBASE_CLIENT_X509_CERT_URL=your-client-cert-url
-NODE_ENV=production
-```
+#### Required Firebase Variables:
+- `FIREBASE_PRIVATE_KEY` - Your Firebase service account private key
+- `FIREBASE_CLIENT_EMAIL` - Your Firebase service account email
+- `FIREBASE_PRIVATE_KEY_ID` - Your Firebase private key ID
+- `FIREBASE_CLIENT_ID` - Your Firebase client ID
 
-### Step 2: Deploy on Render.com
+#### Optional:
+- `SESSION_SECRET` - Random string for session security (auto-generated if not provided)
+- `NODE_ENV` - Set to "production" (automatically set by Render)
 
-1. **Go to [Render.com](https://render.com)** and sign up/login
-2. **Click "New +"** → **"Web Service"**
-3. **Connect your GitHub repository**: `kelvin-lee-cl/link-251004`
-4. **Configure the service**:
-   - **Name**: `marble-run-link-centre`
-   - **Environment**: `Node`
+### 3. Deployment Steps
+
+1. **Connect Repository**: Connect your GitHub repository to Render.com
+2. **Service Configuration**:
+   - **Name**: marble-run-link-centre
+   - **Runtime**: Node.js
    - **Build Command**: `npm install`
    - **Start Command**: `node server.js`
-   - **Plan**: `Free` (or upgrade as needed)
+   - **Plan**: Free
+3. **Environment Variables**: Add all required Firebase credentials
+4. **Deploy**: Click "Create Web Service"
 
-5. **Add Environment Variables**:
-   - Click "Advanced" → "Environment Variables"
-   - Add all the Firebase credentials from your `.env` file
-   - Make sure to wrap the private key in quotes
+### 4. Firebase Setup
 
-6. **Deploy**:
-   - Click "Create Web Service"
-   - Render will automatically build and deploy your app
-   - Your app will be available at: `https://your-app-name.onrender.com`
+1. Go to [Firebase Console](https://console.firebase.google.com/)
+2. Select your project (link-251004)
+3. Go to **Project Settings** > **Service Accounts**
+4. Generate a new private key
+5. Use the downloaded JSON file values for the environment variables
 
-### Step 3: Update Firebase Security Rules
+### 5. Post-Deployment
 
-Make sure your Firebase Firestore rules allow public access for the quiz system:
+1. **Health Check**: Visit `https://your-app-name.onrender.com/api/test`
+2. **Login Test**: Try logging in with M514
+3. **Admin Panel**: Access the admin panel to verify functionality
 
-```javascript
-rules_version = '2';
-service cloud.firestore {
-  match /databases/{database}/documents {
-    // Allow public read/write for quiz system
-    match /{document=**} {
-      allow read, write: if true;
-    }
-  }
-}
-```
+### 6. Troubleshooting
 
-### Step 4: Test Your Deployment
+- **Port Issues**: Render automatically sets PORT=10000
+- **CORS Issues**: Domain should be automatically allowed
+- **Firebase Connection**: Verify credentials are correct
+- **Session Issues**: Check SESSION_SECRET is set
 
-1. Visit your deployed URL
-2. Test the quiz system
-3. Test the admin dashboard
-4. Test the redemption booth
-5. Test the public display
+### 7. Features Available After Deployment
 
-### Troubleshooting
+✅ **User Authentication** - Login system with passcodes
+✅ **Quiz System** - Interactive quizzes with scoring
+✅ **Team Management** - Team registration and progress tracking
+✅ **Admin Panel** - Complete administrative interface
+✅ **User Management** - View all users and their activity
+✅ **Passcode Randomization** - Admin can randomize all passcodes
+✅ **CSV Export** - Export user credentials
+✅ **Firebase Integration** - Real-time data storage
 
-- **Build fails**: Check that all dependencies are in `package.json`
-- **Environment variables**: Make sure all Firebase credentials are set correctly
-- **Database connection**: Verify Firebase project ID and credentials
-- **CORS issues**: The server already handles CORS for all origins
+## 🔧 Configuration Files
 
-### Monitoring
+- `render.yaml` - Render.com deployment configuration
+- `server.js` - Main application server
+- `package.json` - Node.js dependencies
 
-- Check Render dashboard for logs
-- Monitor Firebase usage in Firebase console
-- Set up alerts for errors if needed
+## 📊 API Endpoints
 
-## Alternative Deployment Options
+All endpoints are available at `https://your-app-name.onrender.com`:
 
-### Vercel (Serverless)
-- Good for static sites with API routes
-- May need to adapt for session-based auth
+- `GET /api/test` - Health check
+- `POST /api/login` - User authentication
+- `GET /api/auth-status` - Check authentication status
+- `GET /api/admin/passcodes` - Get all passcodes (admin only)
+- `POST /api/admin/randomize-passcodes` - Randomize passcodes (admin only)
+- `GET /api/admin/export-csv` - Export user credentials as CSV (admin only)
 
-### Railway
-- Similar to Render
-- Easy environment variable management
+## 🔐 Security Notes
 
-### Heroku
-- Classic PaaS option
-- Requires credit card for free tier
+- Firebase credentials are stored securely as Render secrets
+- Session cookies are HTTP-only and secure in production
+- Admin functions require proper authentication
+- CORS is configured for production domains
 
-## Security Considerations
+## 📝 Admin Access
 
-- Never commit `.env` files to Git
-- Use environment variables for all secrets
-- Regularly rotate Firebase service account keys
-- Monitor Firebase usage and costs
+- **Admin User**: M514 (User ID: 201)
+- **Admin Panel**: Automatically available after login
+- **Features**: User management, quiz editing, data reset, CSV export

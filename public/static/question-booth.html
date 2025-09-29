@@ -815,8 +815,8 @@
     <div id="navbar-container"></div>
 
 
-    <!-- Quiz Section -->
-    <div class="container quiz-section">
+    <!-- Quiz Section (Hidden for admin users) -->
+    <div class="container quiz-section" id="quizSection">
         <div class=" row">
             <div class="col-12">
                 <h2 class="text-center mt-4 mb-4">Question Booth</h2>
@@ -828,13 +828,14 @@
                     <button class="btn btn-success btn-lg" onclick="showQuizTopics()">
                         <i class="fas fa-brain me-2"></i>Take a Quiz
                     </button>
-                    <button class="btn btn-warning btn-lg" data-bs-toggle="modal" data-bs-target="#adminAccessModal">
+                    <button class="btn btn-warning btn-lg" id="adminAccessBtn" data-bs-toggle="modal"
+                        data-bs-target="#adminAccessModal">
                         <i class="fas fa-cog me-2"></i>Admin Access
                     </button>
                 </div>
 
-                <!-- User Token Display -->
-                <div class="row justify-content-center mb-4">
+                <!-- User Token Display (Hidden for admin users) -->
+                <div class="row justify-content-center mb-4" id="userProgressSection">
                     <div class="col-md-6">
                         <div class="card border-primary">
                             <div class="card-header bg-primary text-white">
@@ -854,6 +855,12 @@
                                             <p class="text-muted mb-0">Topics Completed</p>
                                         </div>
                                     </div>
+                                </div>
+                                <!-- Admin Badge (shown only for admin user) -->
+                                <div id="adminBadge" class="mt-2" style="display: none;">
+                                    <span class="badge bg-danger fs-6">
+                                        <i class="fas fa-shield-alt me-1"></i>ADMIN USER
+                                    </span>
                                 </div>
                                 <div class="mt-3">
                                     <button class="btn btn-outline-primary btn-sm" onclick="refreshUserProgress()">
@@ -883,6 +890,12 @@
                     <div>
                         <button class="btn btn-primary me-2" onclick="loadTeamProgress()">
                             <i class="fas fa-sync-alt me-2"></i>Refresh Progress
+                        </button>
+                        <button class="btn btn-warning me-2" onclick="randomizeAllPasscodes()">
+                            <i class="fas fa-random me-2"></i>Randomize Passcodes
+                        </button>
+                        <button class="btn btn-info me-2" onclick="exportUserCredentials()">
+                            <i class="fas fa-download me-2"></i>Export CSV
                         </button>
                         <button class="btn btn-danger" onclick="resetAllData()">
                             <i class="fas fa-trash me-2"></i>Reset All Data
@@ -923,6 +936,36 @@
                 </div>
                 <div class="questions-container" id="questionsContainer">
                     <!-- Quiz questions will be loaded here -->
+                </div>
+
+                <!-- User Management Section -->
+                <h3 class="mb-4">User Management</h3>
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <span>Total Users: <span id="totalUsersCount">0</span></span>
+                    <div>
+                        <button class="btn btn-info me-2" onclick="loadUserManagement()">
+                            <i class="fas fa-sync-alt me-2"></i>Refresh Users
+                        </button>
+                        <button class="btn btn-success" onclick="showPasscodeModal()">
+                            <i class="fas fa-plus me-2"></i>Add New Passcode
+                        </button>
+                    </div>
+                </div>
+                <div class="admin-table mb-5">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>User ID</th>
+                                <th>Passcode</th>
+                                <th>Last Login</th>
+                                <th>User Type</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="userManagementTable">
+                            <!-- User data will be loaded here -->
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
@@ -1081,6 +1124,81 @@
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                     <button type="button" class="btn btn-primary" onclick="saveQuizChanges()">
                         <i class="fas fa-save me-2"></i>Save Changes
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Passkey Modal -->
+    <div class="modal fade" id="editPasskeyModal" tabindex="-1" aria-labelledby="editPasskeyModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editPasskeyModalLabel">
+                        <i class="fas fa-key me-2"></i>Edit User Passkey
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editPasskeyForm">
+                        <div class="mb-3">
+                            <label for="editUserId" class="form-label">User ID</label>
+                            <input type="text" class="form-control" id="editUserId" readonly>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editPasscode" class="form-label">Current Passcode</label>
+                            <input type="text" class="form-control" id="editCurrentPasscode" readonly>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editNewPasscode" class="form-label">New Passcode</label>
+                            <input type="text" class="form-control" id="editNewPasscode" maxlength="4"
+                                placeholder="Enter 4-character passcode" required>
+                            <div class="form-text">Passcode must be exactly 4 alphanumeric characters (A-Z, 0-9)</div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="updateUserPasskey()">
+                        <i class="fas fa-save me-2"></i>Update Passkey
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add New Passcode Modal -->
+    <div class="modal fade" id="addPasscodeModal" tabindex="-1" aria-labelledby="addPasscodeModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addPasscodeModalLabel">
+                        <i class="fas fa-plus me-2"></i>Add New Passcode
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addPasscodeForm">
+                        <div class="mb-3">
+                            <label for="newUserId" class="form-label">User ID</label>
+                            <input type="text" class="form-control" id="newUserId"
+                                placeholder="Enter user ID (e.g., 202)" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="newPasscode" class="form-label">Passcode</label>
+                            <input type="text" class="form-control" id="newPasscode" maxlength="4"
+                                placeholder="Enter 4-character passcode" required>
+                            <div class="form-text">Passcode must be exactly 4 alphanumeric characters (A-Z, 0-9)</div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-success" onclick="addNewPasscode()">
+                        <i class="fas fa-plus me-2"></i>Add Passcode
                     </button>
                 </div>
             </div>
@@ -1249,7 +1367,66 @@
                     console.log('User not authenticated, showing 0 progress');
                     document.getElementById('userTotalTokens').textContent = '0';
                     document.getElementById('userCompletedTopics').textContent = '0/10';
+                    document.getElementById('adminBadge').style.display = 'none';
                     return;
+                }
+
+                // Show admin badge if user is admin
+                if (authData.isAdmin) {
+                    document.getElementById('adminBadge').style.display = 'block';
+
+                    // Hide quiz section and user progress for admin users
+                    const quizSection = document.getElementById('quizSection');
+                    const userProgressSection = document.getElementById('userProgressSection');
+                    if (quizSection) quizSection.style.display = 'none';
+                    if (userProgressSection) userProgressSection.style.display = 'none';
+
+                    // Update admin access button for admin user
+                    const adminBtn = document.getElementById('adminAccessBtn');
+                    if (adminBtn) {
+                        adminBtn.innerHTML = '<i class="fas fa-shield-alt me-2"></i>Admin Panel';
+                        adminBtn.className = 'btn btn-danger btn-lg';
+                        adminBtn.onclick = function () {
+                            // Toggle admin panel visibility
+                            const adminSection = document.getElementById('adminSection');
+                            if (adminSection.style.display === 'none') {
+                                adminSection.style.display = 'block';
+                                loadQuizQuestions();
+                                loadTeamProgress();
+                                loadUserManagement();
+                            } else {
+                                adminSection.style.display = 'none';
+                            }
+                        };
+                    }
+
+                    // Automatically show admin panel for admin user
+                    const adminSection = document.getElementById('adminSection');
+                    if (adminSection && adminSection.style.display === 'none') {
+                        adminSection.style.display = 'block';
+                        // Load admin data
+                        loadQuizQuestions();
+                        loadTeamProgress();
+                        loadUserManagement();
+                    }
+                } else {
+                    document.getElementById('adminBadge').style.display = 'none';
+
+                    // Show quiz section and user progress for non-admin users
+                    const quizSection = document.getElementById('quizSection');
+                    const userProgressSection = document.getElementById('userProgressSection');
+                    if (quizSection) quizSection.style.display = 'block';
+                    if (userProgressSection) userProgressSection.style.display = 'flex';
+
+                    // Reset admin access button for non-admin users
+                    const adminBtn = document.getElementById('adminAccessBtn');
+                    if (adminBtn) {
+                        adminBtn.innerHTML = '<i class="fas fa-cog me-2"></i>Admin Access';
+                        adminBtn.className = 'btn btn-warning btn-lg';
+                        adminBtn.setAttribute('data-bs-toggle', 'modal');
+                        adminBtn.setAttribute('data-bs-target', '#adminAccessModal');
+                        adminBtn.onclick = null;
+                    }
                 }
 
                 const currentUserId = authData.userId;
@@ -1304,6 +1481,74 @@
         // Function to refresh user progress
         function refreshUserProgress() {
             loadUserProgress();
+        }
+
+        // Function to randomize all passcodes
+        async function randomizeAllPasscodes() {
+            if (!confirm('Are you sure you want to randomize ALL user passcodes? This will change every user\'s passcode except M514. Users will need to be notified of their new passcodes.')) {
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/admin/randomize-passcodes', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    credentials: 'include'
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    alert(`Passcodes randomized successfully! ${data.randomizedCount} passcodes were changed.`);
+                    // Refresh the user management table to show new passcodes
+                    loadUserManagement();
+                } else {
+                    alert('Failed to randomize passcodes: ' + data.error);
+                }
+            } catch (error) {
+                console.error('Error randomizing passcodes:', error);
+                alert('Error randomizing passcodes. Please try again.');
+            }
+        }
+
+        // Function to export user credentials as CSV
+        async function exportUserCredentials() {
+            try {
+                // Use the server endpoint to generate and download CSV
+                const response = await fetch('/api/admin/export-csv', {
+                    method: 'GET',
+                    credentials: 'include'
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    alert('Failed to export CSV: ' + (errorData.error || 'Unknown error'));
+                    return;
+                }
+
+                // Create blob and download
+                const csvContent = await response.text();
+                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                const link = document.createElement('a');
+
+                if (link.download !== undefined) {
+                    const url = URL.createObjectURL(blob);
+                    link.setAttribute('href', url);
+                    link.setAttribute('download', `user_credentials_${new Date().toISOString().split('T')[0]}.csv`);
+                    link.style.visibility = 'hidden';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                }
+
+                alert('User credentials CSV file downloaded successfully!');
+
+            } catch (error) {
+                console.error('Error exporting CSV:', error);
+                alert('Error exporting CSV. Please try again.');
+            }
         }
 
         // Function to render team progress
@@ -1613,6 +1858,7 @@
                         // Load admin data
                         loadQuizQuestions();
                         loadTeamProgress();
+                        loadUserManagement();
 
                         // Close modal
                         const modal = bootstrap.Modal.getInstance(document.getElementById('adminAccessModal'));
@@ -1626,6 +1872,200 @@
                 });
             }
         });
+
+        // User Management Functions
+        async function loadUserManagement() {
+            try {
+                console.log('Loading user management data...');
+
+                // Get all passcodes
+                const passcodeResponse = await fetch('/api/admin/passcodes', { credentials: 'include' });
+                const passcodeData = await passcodeResponse.json();
+
+                if (!passcodeData.success) {
+                    console.error('Failed to load passcodes:', passcodeData.error);
+                    return;
+                }
+
+                // Get user login history
+                const loginResponse = await fetch('/api/admin/user-logins', { credentials: 'include' });
+                const loginData = await loginResponse.json();
+
+                if (!loginData.success) {
+                    console.error('Failed to load user logins:', loginData.error);
+                    return;
+                }
+
+                console.log('Passcode data:', passcodeData.passcodes);
+                console.log('Login data:', loginData.users);
+
+                // Combine the data
+                const combinedUsers = passcodeData.passcodes.map(passcodeInfo => {
+                    const loginInfo = loginData.users.find(login => login.userId === passcodeInfo.userId);
+                    return {
+                        userId: passcodeInfo.userId,
+                        passcode: passcodeInfo.passcode,
+                        lastLogin: loginInfo ? loginInfo.loginTime : 'Never',
+                        userType: parseInt(passcodeInfo.userId) <= 16 ? 'Marble Run' : 'Individual'
+                    };
+                }).sort((a, b) => parseInt(a.userId) - parseInt(b.userId));
+
+                renderUserManagementTable(combinedUsers);
+
+            } catch (error) {
+                console.error('Failed to load user management data:', error);
+            }
+        }
+
+        function renderUserManagementTable(users) {
+            const container = document.getElementById('userManagementTable');
+            const countElement = document.getElementById('totalUsersCount');
+
+            if (!container || !countElement) {
+                console.error('User management container or count element not found');
+                return;
+            }
+
+            countElement.textContent = users.length;
+
+            if (users.length === 0) {
+                container.innerHTML = '<tr><td colspan="5" class="text-center text-muted">No users found.</td></tr>';
+                return;
+            }
+
+            let html = '';
+            users.forEach(user => {
+                const lastLoginFormatted = user.lastLogin === 'Never' ?
+                    'Never' :
+                    new Date(user.lastLogin).toLocaleString();
+
+                const isAdmin = user.userId === '201';
+                const adminBadge = isAdmin ? '<span class="badge bg-danger ms-2">ADMIN</span>' : '';
+
+                html += `
+                    <tr>
+                        <td><strong>${user.userId}</strong>${adminBadge}</td>
+                        <td>
+                            <code class="bg-light px-2 py-1 rounded">${user.passcode}</code>
+                        </td>
+                        <td>${lastLoginFormatted}</td>
+                        <td>
+                            <span class="badge ${user.userType === 'Marble Run' ? 'bg-primary' : 'bg-secondary'}">
+                                ${user.userType}
+                            </span>
+                        </td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-primary me-2" onclick="editUserPasskey('${user.userId}', '${user.passcode}')">
+                                <i class="fas fa-edit"></i> Edit
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        function showPasscodeModal() {
+            const modal = new bootstrap.Modal(document.getElementById('addPasscodeModal'));
+            modal.show();
+        }
+
+        function editUserPasskey(userId, currentPasscode) {
+            document.getElementById('editUserId').value = userId;
+            document.getElementById('editCurrentPasscode').value = currentPasscode;
+            document.getElementById('editNewPasscode').value = '';
+
+            const modal = new bootstrap.Modal(document.getElementById('editPasskeyModal'));
+            modal.show();
+        }
+
+        async function updateUserPasskey() {
+            const userId = document.getElementById('editUserId').value;
+            const newPasscode = document.getElementById('editNewPasscode').value.toUpperCase();
+
+            if (!newPasscode) {
+                alert('Please enter a new passcode');
+                return;
+            }
+
+            if (!/^[A-Z0-9]{4}$/.test(newPasscode)) {
+                alert('Passcode must be exactly 4 alphanumeric characters');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/admin/update-passkey', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        userId: userId,
+                        newPasscode: newPasscode
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    alert('Passkey updated successfully!');
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('editPasskeyModal'));
+                    modal.hide();
+                    loadUserManagement(); // Refresh the table
+                } else {
+                    alert('Failed to update passkey: ' + data.error);
+                }
+            } catch (error) {
+                console.error('Error updating passkey:', error);
+                alert('Error updating passkey');
+            }
+        }
+
+        async function addNewPasscode() {
+            const userId = document.getElementById('newUserId').value;
+            const passcode = document.getElementById('newPasscode').value.toUpperCase();
+
+            if (!userId || !passcode) {
+                alert('Please enter both user ID and passcode');
+                return;
+            }
+
+            if (!/^[A-Z0-9]{4}$/.test(passcode)) {
+                alert('Passcode must be exactly 4 alphanumeric characters');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/admin/update-passkey', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        userId: userId,
+                        newPasscode: passcode
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    alert('New passcode added successfully!');
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('addPasscodeModal'));
+                    modal.hide();
+                    document.getElementById('addPasscodeForm').reset();
+                    loadUserManagement(); // Refresh the table
+                } else {
+                    alert('Failed to add passcode: ' + data.error);
+                }
+            } catch (error) {
+                console.error('Error adding passcode:', error);
+                alert('Error adding passcode');
+            }
+        }
     </script>
 
 </body>
