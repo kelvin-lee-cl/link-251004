@@ -65,10 +65,10 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Session configuration - Fixed for production reliability
+// Session configuration - Production-optimized with fallback
 const sessionConfig = {
     secret: process.env.SESSION_SECRET || 'link-stem-workshop-2025',
-    resave: true, // Save session on every request to ensure persistence
+    resave: false, // Don't resave if unmodified to avoid issues
     saveUninitialized: false, // Don't create session until something stored
     name: 'sessionId', // Custom session name
     rolling: true, // Reset expiration on each request
@@ -77,8 +77,11 @@ const sessionConfig = {
         httpOnly: true, // Prevent XSS attacks
         maxAge: 24 * 60 * 60 * 1000, // 24 hours
         sameSite: 'lax', // CSRF protection
-        path: '/' // Ensure cookie is available for all paths
-    }
+        path: '/', // Ensure cookie is available for all paths
+        // Remove domain for better compatibility
+    },
+    // Add explicit session store configuration
+    store: undefined // Use default memory store
 };
 
 console.log('Session configuration:', sessionConfig);
@@ -289,18 +292,30 @@ app.post('/api/login', (req, res) => {
 
     if (userId) {
         req.session.userId = userId;
+        console.log('=== LOGIN SESSION DEBUG ===');
         console.log('Before save - Session ID:', req.sessionID);
+        console.log('Before save - Session keys:', Object.keys(req.session));
         console.log('Before save - Session data:', req.session);
+
+        // Force save the session
         req.session.save((err) => {
             if (err) {
-                console.error('Error saving session:', err);
+                console.error('❌ Error saving session after login:', err);
+                console.error('Session save error details:', err.message);
             } else {
-                console.log('Session saved successfully - Session ID:', req.sessionID);
-                console.log('Session saved successfully - Session data:', req.session);
+                console.log('✅ Session saved successfully after login');
+                console.log('After save - Session ID:', req.sessionID);
+                console.log('After save - Session keys:', Object.keys(req.session));
+                console.log('After save - Session data:', req.session);
+
+                // Verify the session was saved correctly
+                if (req.session.userId) {
+                    console.log('✅ userId verified in session after save:', req.session.userId);
+                } else {
+                    console.error('❌ userId NOT found in session after save!');
+                }
             }
         });
-        console.log('After setting userId - Session ID:', req.sessionID);
-        console.log('After setting userId - Session data:', req.session);
 
         // Track login time
         const loginData = {
@@ -368,6 +383,16 @@ app.get('/api/auth-status', (req, res) => {
     console.log('Session data keys:', req.session ? Object.keys(req.session) : 'No session');
     console.log('Session data:', req.session);
     console.log('Cookies:', req.headers.cookie);
+    console.log('Session store type:', req.sessionStore ? req.sessionStore.constructor.name : 'Unknown');
+
+    // Debug session loading
+    if (req.session) {
+        console.log('🔍 Session loaded from store');
+        console.log('  - Session has userId:', !!req.session.userId);
+        console.log('  - Session keys count:', Object.keys(req.session).length);
+    } else {
+        console.log('❌ No session loaded from store');
+    }
 
     if (req.session && req.session.userId) {
         const userId = req.session.userId;
