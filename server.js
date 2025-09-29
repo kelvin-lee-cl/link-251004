@@ -80,7 +80,8 @@ const sessionConfig = {
         httpOnly: true, // Prevent XSS attacks
         maxAge: 24 * 60 * 60 * 1000, // 24 hours
         sameSite: 'lax', // CSRF protection
-        path: '/' // Ensure cookie is available for all paths
+        path: '/', // Ensure cookie is available for all paths
+        domain: process.env.NODE_ENV === 'production' ? '.onrender.com' : undefined
     }
 };
 
@@ -211,10 +212,26 @@ const passcodeToUser = {
 
 // Authentication middleware
 function requireAuth(req, res, next) {
+    console.log('=== REQUIRE AUTH CHECK ===');
+    console.log('Session ID:', req.sessionID);
+    console.log('Session exists:', !!req.session);
+    console.log('Session keys:', req.session ? Object.keys(req.session) : 'No session');
+    console.log('Session data:', req.session);
+    console.log('userId in session:', req.session ? req.session.userId : 'No session');
+
     if (req.session && req.session.userId) {
+        console.log('✅ Authentication passed for user:', req.session.userId);
         return next();
     } else {
-        return res.status(401).json({ error: 'Authentication required' });
+        console.log('❌ Authentication failed - no valid session');
+        return res.status(401).json({
+            error: 'Authentication required',
+            debug: {
+                sessionExists: !!req.session,
+                userIdExists: !!(req.session && req.session.userId),
+                sessionKeys: req.session ? Object.keys(req.session) : []
+            }
+        });
     }
 }
 
