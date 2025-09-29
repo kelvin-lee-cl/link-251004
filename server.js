@@ -65,10 +65,10 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Session configuration - Simplified for production reliability
+// Session configuration - Fixed for production reliability
 const sessionConfig = {
     secret: process.env.SESSION_SECRET || 'link-stem-workshop-2025',
-    resave: false, // Don't resave if unmodified
+    resave: true, // Save session on every request to ensure persistence
     saveUninitialized: false, // Don't create session until something stored
     name: 'sessionId', // Custom session name
     rolling: true, // Reset expiration on each request
@@ -206,7 +206,7 @@ const passcodeToUser = {
     'H3J4': '200', 'M514': '201'
 };
 
-// Authentication middleware - Simplified for production reliability
+// Authentication middleware - Enhanced debugging for session issues
 function requireAuth(req, res, next) {
     console.log('=== REQUIRE AUTH CHECK ===');
     console.log('Session ID:', req.sessionID);
@@ -215,6 +215,12 @@ function requireAuth(req, res, next) {
     console.log('Session data:', req.session);
     console.log('userId in session:', req.session ? req.session.userId : 'No session');
     console.log('Request cookies:', req.headers.cookie);
+    console.log('Session store type:', req.sessionStore ? req.sessionStore.constructor.name : 'Unknown');
+
+    // Check if this is a new session or existing one
+    if (req.session && Object.keys(req.session).length === 1 && req.session.cookie) {
+        console.log('🔍 New session detected - only cookie data present');
+    }
 
     // Simple check: if session exists and has userId, proceed
     if (req.session && req.session.userId) {
@@ -222,6 +228,13 @@ function requireAuth(req, res, next) {
         return next();
     } else {
         console.log('❌ Authentication failed - no valid session');
+
+        // Additional debugging for session issues
+        console.log('🔍 Session debugging:');
+        console.log('  - Session object type:', typeof req.session);
+        console.log('  - Session constructor:', req.session ? req.session.constructor.name : 'No session');
+        console.log('  - Session store type:', req.sessionStore ? req.sessionStore.constructor.name : 'No store');
+
         return res.status(401).json({
             error: 'Authentication required',
             debug: {
@@ -229,7 +242,9 @@ function requireAuth(req, res, next) {
                 userIdExists: !!(req.session && req.session.userId),
                 sessionKeys: req.session ? Object.keys(req.session) : [],
                 sessionId: req.sessionID,
-                cookies: req.headers.cookie
+                cookies: req.headers.cookie,
+                sessionStore: req.sessionStore ? req.sessionStore.constructor.name : 'Unknown',
+                timestamp: new Date().toISOString()
             }
         });
     }
