@@ -63,7 +63,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Session configuration
-app.use(session({
+const sessionConfig = {
     secret: process.env.SESSION_SECRET || 'link-stem-workshop-2025',
     resave: true, // Save session even if unmodified
     saveUninitialized: false, // Don't create session until something stored
@@ -76,7 +76,10 @@ app.use(session({
         sameSite: 'lax', // CSRF protection
         path: '/' // Ensure cookie is available for all paths
     }
-}));
+};
+
+console.log('Session configuration:', sessionConfig);
+app.use(session(sessionConfig));
 
 // Initialize Firebase Admin SDK
 let db;
@@ -248,6 +251,13 @@ app.post('/api/login', (req, res) => {
 
     if (userId) {
         req.session.userId = userId;
+        req.session.save((err) => {
+            if (err) {
+                console.error('Error saving session:', err);
+            } else {
+                console.log('Session saved successfully');
+            }
+        });
         console.log('Session after setting userId:', req.session);
 
         // Track login time
@@ -313,6 +323,7 @@ app.get('/api/auth-status', (req, res) => {
     console.log('Request headers:', req.headers);
     console.log('Request origin:', req.get('origin'));
     console.log('Session ID:', req.sessionID);
+    console.log('Session data keys:', req.session ? Object.keys(req.session) : 'No session');
     console.log('Session data:', req.session);
     console.log('Cookies:', req.headers.cookie);
 
