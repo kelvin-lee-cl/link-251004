@@ -6,6 +6,9 @@ const FormData = require('form-data');
 const session = require('express-session');
 const admin = require('firebase-admin');
 
+// Session store for production (Redis would be better, but this is a simple fix)
+const MemoryStore = require('memorystore')(session);
+
 // Load environment variables from .env file if it exists
 try {
     require('dotenv').config();
@@ -65,10 +68,13 @@ app.use(express.urlencoded({ extended: true }));
 // Session configuration
 const sessionConfig = {
     secret: process.env.SESSION_SECRET || 'link-stem-workshop-2025',
-    resave: true, // Save session even if unmodified
+    resave: false, // Don't save session if unmodified
     saveUninitialized: false, // Don't create session until something stored
     name: 'sessionId', // Custom session name
     rolling: true, // Reset expiration on each request
+    store: new MemoryStore({
+        checkPeriod: 86400000 // prune expired entries every 24h
+    }),
     cookie: {
         secure: process.env.NODE_ENV === 'production', // HTTPS only in production
         httpOnly: true, // Prevent XSS attacks
@@ -251,14 +257,18 @@ app.post('/api/login', (req, res) => {
 
     if (userId) {
         req.session.userId = userId;
+        console.log('Before save - Session ID:', req.sessionID);
+        console.log('Before save - Session data:', req.session);
         req.session.save((err) => {
             if (err) {
                 console.error('Error saving session:', err);
             } else {
-                console.log('Session saved successfully');
+                console.log('Session saved successfully - Session ID:', req.sessionID);
+                console.log('Session saved successfully - Session data:', req.session);
             }
         });
-        console.log('Session after setting userId:', req.session);
+        console.log('After setting userId - Session ID:', req.sessionID);
+        console.log('After setting userId - Session data:', req.session);
 
         // Track login time
         const loginData = {
