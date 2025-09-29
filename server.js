@@ -22,13 +22,18 @@ app.use(cors({
         // Allow requests with no origin (like mobile apps or curl requests)
         if (!origin) return callback(null, true);
 
-        // Allow localhost for development
-        if (origin.includes('localhost')) {
+        // Allow localhost for development (more permissive)
+        if (origin.includes('localhost') || origin.includes('127.0.0.1')) {
             return callback(null, true);
         }
 
         // Allow deployed domains (Render, production)
-        if (origin.includes('onrender.com') || origin.includes('link-251004')) {
+        if (origin.includes('onrender.com') || origin.includes('link-251004') || origin.includes('marble-run-link-centre')) {
+            return callback(null, true);
+        }
+
+        // Allow file:// protocol for development (when opening HTML directly)
+        if (origin.startsWith('file://')) {
             return callback(null, true);
         }
 
@@ -43,6 +48,12 @@ app.use(cors({
             return callback(null, true);
         }
 
+        // For development, be more permissive
+        if (process.env.NODE_ENV !== 'production') {
+            console.log('Development mode - allowing origin:', origin);
+            return callback(null, true);
+        }
+
         // Reject other origins
         return callback(new Error('Not allowed by CORS'));
     },
@@ -54,7 +65,7 @@ app.use(express.urlencoded({ extended: true }));
 // Session configuration
 app.use(session({
     secret: process.env.SESSION_SECRET || 'link-stem-workshop-2025',
-    resave: false, // Don't save session if unmodified
+    resave: true, // Save session even if unmodified
     saveUninitialized: false, // Don't create session until something stored
     name: 'sessionId', // Custom session name
     rolling: true, // Reset expiration on each request
@@ -222,6 +233,11 @@ function requireUserType(allowedTypes) {
 
 // Login endpoint
 app.post('/api/login', (req, res) => {
+    console.log('=== LOGIN ATTEMPT ===');
+    console.log('Request headers:', req.headers);
+    console.log('Request origin:', req.get('origin'));
+    console.log('Request body:', req.body);
+
     const { passcode } = req.body;
 
     if (!passcode) {
@@ -232,6 +248,7 @@ app.post('/api/login', (req, res) => {
 
     if (userId) {
         req.session.userId = userId;
+        console.log('Session after setting userId:', req.session);
 
         // Track login time
         const loginData = {
@@ -275,6 +292,7 @@ app.post('/api/login', (req, res) => {
             message: 'Login successful'
         });
     } else {
+        console.log('Invalid passcode provided:', passcode.toUpperCase());
         res.status(401).json({ error: 'Invalid passcode' });
     }
 });
@@ -291,8 +309,12 @@ app.post('/api/logout', (req, res) => {
 
 // Check authentication status endpoint
 app.get('/api/auth-status', (req, res) => {
-    console.log('Auth status check - Session ID:', req.sessionID);
-    console.log('Auth status check - Session data:', req.session);
+    console.log('=== AUTH STATUS CHECK ===');
+    console.log('Request headers:', req.headers);
+    console.log('Request origin:', req.get('origin'));
+    console.log('Session ID:', req.sessionID);
+    console.log('Session data:', req.session);
+    console.log('Cookies:', req.headers.cookie);
 
     if (req.session && req.session.userId) {
         const userId = req.session.userId;
@@ -309,7 +331,9 @@ app.get('/api/auth-status', (req, res) => {
             isAdmin: isAdmin
         });
     } else {
-        console.log('User is not authenticated');
+        console.log('User is not authenticated - no session or no userId');
+        console.log('Session exists:', !!req.session);
+        console.log('userId exists:', !!(req.session && req.session.userId));
         res.json({ authenticated: false });
     }
 });
