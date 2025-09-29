@@ -27,6 +27,22 @@ app.use(cors({
             return callback(null, true);
         }
 
+        // Allow deployed domains (Render, production)
+        if (origin.includes('onrender.com') || origin.includes('link-251004')) {
+            return callback(null, true);
+        }
+
+        // Allow specific development domains
+        const allowedOrigins = [
+            'http://localhost:3000',
+            'http://127.0.0.1:3000',
+            'https://link-251004.onrender.com'
+        ];
+
+        if (allowedOrigins.includes(origin)) {
+            return callback(null, true);
+        }
+
         // Reject other origins
         return callback(new Error('Not allowed by CORS'));
     },
