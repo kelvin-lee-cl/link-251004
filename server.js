@@ -65,16 +65,13 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Session configuration
+// Session configuration - Simplified for production reliability
 const sessionConfig = {
     secret: process.env.SESSION_SECRET || 'link-stem-workshop-2025',
-    resave: true, // Save session on every request to ensure persistence
+    resave: false, // Don't resave if unmodified
     saveUninitialized: false, // Don't create session until something stored
     name: 'sessionId', // Custom session name
     rolling: true, // Reset expiration on each request
-    store: new MemoryStore({
-        checkPeriod: 86400000 // prune expired entries every 24h
-    }),
     cookie: {
         secure: process.env.NODE_ENV === 'production', // HTTPS only in production
         httpOnly: true, // Prevent XSS attacks
@@ -209,7 +206,7 @@ const passcodeToUser = {
     'H3J4': '200', 'M514': '201'
 };
 
-// Authentication middleware
+// Authentication middleware - Simplified for production reliability
 function requireAuth(req, res, next) {
     console.log('=== REQUIRE AUTH CHECK ===');
     console.log('Session ID:', req.sessionID);
@@ -219,55 +216,22 @@ function requireAuth(req, res, next) {
     console.log('userId in session:', req.session ? req.session.userId : 'No session');
     console.log('Request cookies:', req.headers.cookie);
 
+    // Simple check: if session exists and has userId, proceed
     if (req.session && req.session.userId) {
         console.log('✅ Authentication passed for user:', req.session.userId);
         return next();
     } else {
         console.log('❌ Authentication failed - no valid session');
-
-        // Try to reload the session explicitly
-        if (req.session) {
-            console.log('🔄 Attempting to reload session...');
-            req.session.reload((err) => {
-                if (err) {
-                    console.error('Session reload error:', err);
-                    return res.status(401).json({
-                        error: 'Authentication required - session reload failed',
-                        debug: {
-                            sessionExists: !!req.session,
-                            userIdExists: !!(req.session && req.session.userId),
-                            sessionKeys: req.session ? Object.keys(req.session) : [],
-                            reloadError: err.message
-                        }
-                    });
-                } else {
-                    console.log('Session reloaded, checking userId again...');
-                    console.log('Reloaded session data:', req.session);
-                    if (req.session.userId) {
-                        console.log('✅ Authentication passed after reload for user:', req.session.userId);
-                        return next();
-                    } else {
-                        return res.status(401).json({
-                            error: 'Authentication required - no userId after reload',
-                            debug: {
-                                sessionExists: !!req.session,
-                                userIdExists: !!(req.session && req.session.userId),
-                                sessionKeys: req.session ? Object.keys(req.session) : []
-                            }
-                        });
-                    }
-                }
-            });
-        } else {
-            return res.status(401).json({
-                error: 'Authentication required',
-                debug: {
-                    sessionExists: !!req.session,
-                    userIdExists: !!(req.session && req.session.userId),
-                    sessionKeys: req.session ? Object.keys(req.session) : []
-                }
-            });
-        }
+        return res.status(401).json({
+            error: 'Authentication required',
+            debug: {
+                sessionExists: !!req.session,
+                userIdExists: !!(req.session && req.session.userId),
+                sessionKeys: req.session ? Object.keys(req.session) : [],
+                sessionId: req.sessionID,
+                cookies: req.headers.cookie
+            }
+        });
     }
 }
 
