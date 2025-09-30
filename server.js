@@ -46,7 +46,7 @@ app.use(cors({
         const allowedOrigins = [
             'http://localhost:3000',
             'http://127.0.0.1:3000',
-            'http://localhost:10000,
+            'http://localhost:10000',
             'https://link-251004.onrender.com',
             'https://marble-run-link-centre.onrender.com'
         ];
@@ -384,10 +384,10 @@ app.post('/api/login', (req, res) => {
             if (err) {
                 console.error('❌ Error saving session after login:', err);
                 console.error('Session save error details:', err.message);
-                return res.status(500).json({ 
-                    success: false, 
+                return res.status(500).json({
+                    success: false,
                     error: 'Session save failed',
-                    details: err.message 
+                    details: err.message
                 });
             } else {
                 console.log('✅ Session saved successfully after login');
