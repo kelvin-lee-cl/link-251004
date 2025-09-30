@@ -104,7 +104,7 @@ const sessionConfig = {
     name: 'sessionId', // Custom session name
     rolling: false, // Don't reset expiration on each request
     cookie: {
-        secure: process.env.NODE_ENV === 'production', // HTTPS only in production
+        secure: false, // Temporarily disable secure cookies to fix session issues
         httpOnly: true, // Prevent XSS attacks
         maxAge: 24 * 60 * 60 * 1000, // 24 hours
         sameSite: 'lax', // CSRF protection
@@ -533,6 +533,43 @@ app.get('/api/auth-status', (req, res) => {
                 }
             }
         });
+    }
+});
+
+// Test login endpoint to verify login process
+app.post('/api/test-login', (req, res) => {
+    console.log('=== TEST LOGIN ENDPOINT ===');
+    console.log('Testing login with M514...');
+    
+    const testPasscode = 'M514';
+    const userId = passcodeToUser[testPasscode];
+    
+    console.log('Test passcode:', testPasscode);
+    console.log('Found userId:', userId);
+    
+    if (userId) {
+        console.log('Setting userId in session...');
+        req.session.userId = userId;
+        console.log('Session after setting userId:', req.session);
+        
+        req.session.save((err) => {
+            if (err) {
+                console.error('❌ Error saving test session:', err);
+                res.json({ success: false, error: err.message });
+            } else {
+                console.log('✅ Test session saved successfully');
+                console.log('Final session data:', req.session);
+                res.json({ 
+                    success: true, 
+                    message: 'Test login successful',
+                    userId: userId,
+                    sessionData: req.session
+                });
+            }
+        });
+    } else {
+        console.error('❌ Test passcode not found');
+        res.json({ success: false, error: 'Test passcode not found' });
     }
 });
 
