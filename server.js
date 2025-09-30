@@ -70,7 +70,7 @@ app.use(express.urlencoded({ extended: true }));
 
 // Configure session store based on environment
 let sessionStore;
-if (process.env.NODE_ENV === 'production' && process.env.REDIS_URL) {
+if (false) { // TEMPORARILY DISABLE REDIS - Force MemoryStore to fix authentication
     // Use Redis in production
     const redisClient = createClient({
         url: process.env.REDIS_URL,
@@ -80,7 +80,7 @@ if (process.env.NODE_ENV === 'production' && process.env.REDIS_URL) {
     sessionStore = new RedisStore({ client: redisClient });
     console.log('Using Redis session store for production');
 } else {
-    // Use MemoryStore in development
+    // Use MemoryStore in development AND production (temporary fix)
     sessionStore = new MemoryStore({
         checkPeriod: 86400000, // prune expired entries every 24h
         max: 1000, // max sessions
@@ -92,7 +92,7 @@ if (process.env.NODE_ENV === 'production' && process.env.REDIS_URL) {
             console.error('Session store error:', error);
         }
     });
-    console.log('Using MemoryStore for development');
+    console.log('Using MemoryStore for development AND production (temporary fix)');
 }
 
 // Session configuration - Production-optimized with explicit settings
