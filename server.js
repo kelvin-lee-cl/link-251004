@@ -44,7 +44,8 @@ app.use(cors({
         const allowedOrigins = [
             'http://localhost:3000',
             'http://127.0.0.1:3000',
-            'https://link-251004.onrender.com'
+            'https://link-251004.onrender.com',
+            'https://marble-run-link-centre.onrender.com'
         ];
 
         if (allowedOrigins.includes(origin)) {
@@ -65,23 +66,32 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Session configuration - Production-optimized with fallback
+// Session configuration - Production-optimized with explicit settings
 const sessionConfig = {
     secret: process.env.SESSION_SECRET || 'link-stem-workshop-2025',
-    resave: false, // Don't resave if unmodified to avoid issues
+    resave: true, // Resave session on each request to ensure persistence
     saveUninitialized: false, // Don't create session until something stored
     name: 'sessionId', // Custom session name
-    rolling: true, // Reset expiration on each request
+    rolling: false, // Don't reset expiration on each request
     cookie: {
         secure: process.env.NODE_ENV === 'production', // HTTPS only in production
         httpOnly: true, // Prevent XSS attacks
         maxAge: 24 * 60 * 60 * 1000, // 24 hours
         sameSite: 'lax', // CSRF protection
         path: '/', // Ensure cookie is available for all paths
-        // Remove domain for better compatibility
     },
-    // Add explicit session store configuration
-    store: undefined // Use default memory store
+    // Use MemoryStore with explicit configuration for Render compatibility
+    store: new MemoryStore({
+        checkPeriod: 86400000, // prune expired entries every 24h
+        max: 1000, // max sessions
+        ttl: 24 * 60 * 60 * 1000, // 24 hours in milliseconds
+        dispose: function (key, value) {
+            console.log('Session disposed:', key);
+        },
+        errorHandler: function (error) {
+            console.error('Session store error:', error);
+        }
+    })
 };
 
 console.log('Session configuration:', sessionConfig);
@@ -223,6 +233,22 @@ function requireAuth(req, res, next) {
     // Check if this is a new session or existing one
     if (req.session && Object.keys(req.session).length === 1 && req.session.cookie) {
         console.log('🔍 New session detected - only cookie data present');
+    }
+
+    // Debug session store operations
+    if (req.sessionStore) {
+        console.log('🔍 Session store info:');
+        console.log('  - Store has session?', req.sessionStore);
+        if (typeof req.sessionStore.get === 'function') {
+            req.sessionStore.get(req.sessionID, (err, sessionData) => {
+                console.log('  - Raw session data from store:', err ? err.message : sessionData);
+                if (sessionData && sessionData.userId) {
+                    console.log('  - userId found in raw store data:', sessionData.userId);
+                } else {
+                    console.log('  - No userId in raw store data');
+                }
+            });
+        }
     }
 
     // Simple check: if session exists and has userId, proceed
