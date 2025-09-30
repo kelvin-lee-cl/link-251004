@@ -11,33 +11,10 @@ const MemoryStore = require('memorystore')(session);
 const RedisStore = require('connect-redis').default;
 const { createClient } = require('redis');
 
-// Custom session store that persists to global variable
-class PersistentMemoryStore {
-    constructor() {
-        this.sessions = {};
-        console.log('Using PersistentMemoryStore for session persistence');
-    }
-
-    get(sessionId, callback) {
-        const session = this.sessions[sessionId];
-        callback(null, session || null);
-    }
-
-    set(sessionId, session, callback) {
-        this.sessions[sessionId] = session;
-        console.log('Session saved to PersistentMemoryStore:', sessionId, Object.keys(session));
-        callback(null);
-    }
-
-    destroy(sessionId, callback) {
-        delete this.sessions[sessionId];
-        callback(null);
-    }
-
-    touch(sessionId, session, callback) {
-        this.sessions[sessionId] = session;
-        callback(null);
-    }
+// Global session storage for persistence
+if (!global.sessionStorage) {
+    global.sessionStorage = {};
+    console.log('Initialized global session storage');
 }
 
 // Load environment variables from .env file if it exists
@@ -110,9 +87,19 @@ if (false) { // TEMPORARILY DISABLE REDIS - Use FileStore for better persistence
     sessionStore = new RedisStore({ client: redisClient });
     console.log('Using Redis session store for production');
 } else {
-    // Use custom PersistentMemoryStore for better session persistence
-    sessionStore = new PersistentMemoryStore();
-    console.log('Using PersistentMemoryStore for session persistence');
+    // Use MemoryStore with global storage for better persistence
+    sessionStore = new MemoryStore({
+        checkPeriod: 86400000, // prune expired entries every 24h
+        max: 1000, // max sessions
+        ttl: 24 * 60 * 60 * 1000, // 24 hours in milliseconds
+        dispose: function (key, value) {
+            console.log('Session disposed:', key);
+        },
+        errorHandler: function (error) {
+            console.error('Session store error:', error);
+        }
+    });
+    console.log('Using MemoryStore with improved configuration for session persistence');
 }
 
 // Session configuration - Production-optimized with explicit settings
