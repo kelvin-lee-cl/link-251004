@@ -17,23 +17,23 @@ class PersistentMemoryStore {
         this.sessions = {};
         console.log('Using PersistentMemoryStore for session persistence');
     }
-    
+
     get(sessionId, callback) {
         const session = this.sessions[sessionId];
         callback(null, session || null);
     }
-    
+
     set(sessionId, session, callback) {
         this.sessions[sessionId] = session;
         console.log('Session saved to PersistentMemoryStore:', sessionId, Object.keys(session));
         callback(null);
     }
-    
+
     destroy(sessionId, callback) {
         delete this.sessions[sessionId];
         callback(null);
     }
-    
+
     touch(sessionId, session, callback) {
         this.sessions[sessionId] = session;
         callback(null);
@@ -119,11 +119,11 @@ if (false) { // TEMPORARILY DISABLE REDIS - Use FileStore for better persistence
 const sessionConfig = {
     secret: process.env.SESSION_SECRET || 'link-stem-workshop-2025',
     resave: true, // Resave session on each request to ensure persistence
-    saveUninitialized: false, // Don't create session until something stored
+    saveUninitialized: true, // Create session immediately to ensure persistence
     name: 'sessionId', // Custom session name
-    rolling: false, // Don't reset expiration on each request
+    rolling: true, // Reset expiration on each request to keep session alive
     cookie: {
-        secure: false, // Temporarily disable secure cookies to fix session issues
+        secure: false, // Disable secure cookies to fix session issues
         httpOnly: true, // Prevent XSS attacks
         maxAge: 24 * 60 * 60 * 1000, // 24 hours
         sameSite: 'lax', // CSRF protection
