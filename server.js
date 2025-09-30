@@ -10,7 +10,35 @@ const admin = require('firebase-admin');
 const MemoryStore = require('memorystore')(session);
 const RedisStore = require('connect-redis').default;
 const { createClient } = require('redis');
-const FileStore = require('session-file-store')(session);
+
+// Custom session store that persists to global variable
+class PersistentMemoryStore {
+    constructor() {
+        this.sessions = {};
+        console.log('Using PersistentMemoryStore for session persistence');
+    }
+    
+    get(sessionId, callback) {
+        const session = this.sessions[sessionId];
+        callback(null, session || null);
+    }
+    
+    set(sessionId, session, callback) {
+        this.sessions[sessionId] = session;
+        console.log('Session saved to PersistentMemoryStore:', sessionId, Object.keys(session));
+        callback(null);
+    }
+    
+    destroy(sessionId, callback) {
+        delete this.sessions[sessionId];
+        callback(null);
+    }
+    
+    touch(sessionId, session, callback) {
+        this.sessions[sessionId] = session;
+        callback(null);
+    }
+}
 
 // Load environment variables from .env file if it exists
 try {
@@ -82,16 +110,9 @@ if (false) { // TEMPORARILY DISABLE REDIS - Use FileStore for better persistence
     sessionStore = new RedisStore({ client: redisClient });
     console.log('Using Redis session store for production');
 } else {
-    // Use FileStore for better session persistence than MemoryStore
-    sessionStore = new FileStore({
-        path: './sessions',
-        ttl: 24 * 60 * 60, // 24 hours in seconds
-        retries: 5,
-        logFn: function () {
-            console.log('FileStore:', arguments);
-        }
-    });
-    console.log('Using FileStore for session persistence (better than MemoryStore)');
+    // Use custom PersistentMemoryStore for better session persistence
+    sessionStore = new PersistentMemoryStore();
+    console.log('Using PersistentMemoryStore for session persistence');
 }
 
 // Session configuration - Production-optimized with explicit settings
