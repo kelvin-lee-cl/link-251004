@@ -99,7 +99,7 @@ if (false) { // TEMPORARILY DISABLE REDIS - Use FileStore for better persistence
             console.error('Session store error:', error);
         }
     });
-    console.log('Using MemoryStore with improved configuration for session persistence');
+    console.log('✅ Using MemoryStore with improved configuration for session persistence');
 }
 
 // Session configuration - Production-optimized with explicit settings
@@ -120,6 +120,7 @@ const sessionConfig = {
 };
 
 console.log('Session configuration:', sessionConfig);
+console.log('Session store type:', sessionStore.constructor.name);
 app.use(session(sessionConfig));
 
 // Initialize Firebase Admin SDK
