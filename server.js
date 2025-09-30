@@ -154,16 +154,9 @@ app.use((req, res, next) => {
     next();
 });
 
-// Serve static files from the public directory
+// Serve static files - prioritize public/static for root routes, fallback to public
+app.use('/', express.static('public/static'));
 app.use(express.static('public'));
-// Serve static files from the public/static directory at root (but not for API routes)
-app.use('/', (req, res, next) => {
-    // Skip API routes for static file serving
-    if (req.path.startsWith('/api/')) {
-        return next();
-    }
-    express.static('public/static')(req, res, next);
-});
 
 // Passcode to user mapping (same as frontend)
 const passcodeToUser = {
