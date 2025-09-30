@@ -10,6 +10,7 @@ const admin = require('firebase-admin');
 const MemoryStore = require('memorystore')(session);
 const RedisStore = require('connect-redis').default;
 const { createClient } = require('redis');
+const FileStore = require('session-file-store')(session);
 
 // Load environment variables from .env file if it exists
 try {
@@ -71,7 +72,7 @@ app.use(express.urlencoded({ extended: true }));
 
 // Configure session store based on environment
 let sessionStore;
-if (false) { // TEMPORARILY DISABLE REDIS - Force MemoryStore to fix authentication
+if (false) { // TEMPORARILY DISABLE REDIS - Use FileStore for better persistence
     // Use Redis in production
     const redisClient = createClient({
         url: process.env.REDIS_URL,
@@ -81,19 +82,16 @@ if (false) { // TEMPORARILY DISABLE REDIS - Force MemoryStore to fix authenticat
     sessionStore = new RedisStore({ client: redisClient });
     console.log('Using Redis session store for production');
 } else {
-    // Use MemoryStore in development AND production (temporary fix)
-    sessionStore = new MemoryStore({
-        checkPeriod: 86400000, // prune expired entries every 24h
-        max: 1000, // max sessions
-        ttl: 24 * 60 * 60 * 1000, // 24 hours in milliseconds
-        dispose: function (key, value) {
-            console.log('Session disposed:', key);
-        },
-        errorHandler: function (error) {
-            console.error('Session store error:', error);
+    // Use FileStore for better session persistence than MemoryStore
+    sessionStore = new FileStore({
+        path: './sessions',
+        ttl: 24 * 60 * 60, // 24 hours in seconds
+        retries: 5,
+        logFn: function () {
+            console.log('FileStore:', arguments);
         }
     });
-    console.log('Using MemoryStore for development AND production (temporary fix)');
+    console.log('Using FileStore for session persistence (better than MemoryStore)');
 }
 
 // Session configuration - Production-optimized with explicit settings
@@ -540,18 +538,18 @@ app.get('/api/auth-status', (req, res) => {
 app.post('/api/test-login', (req, res) => {
     console.log('=== TEST LOGIN ENDPOINT ===');
     console.log('Testing login with M514...');
-    
+
     const testPasscode = 'M514';
     const userId = passcodeToUser[testPasscode];
-    
+
     console.log('Test passcode:', testPasscode);
     console.log('Found userId:', userId);
-    
+
     if (userId) {
         console.log('Setting userId in session...');
         req.session.userId = userId;
         console.log('Session after setting userId:', req.session);
-        
+
         req.session.save((err) => {
             if (err) {
                 console.error('❌ Error saving test session:', err);
@@ -559,8 +557,8 @@ app.post('/api/test-login', (req, res) => {
             } else {
                 console.log('✅ Test session saved successfully');
                 console.log('Final session data:', req.session);
-                res.json({ 
-                    success: true, 
+                res.json({
+                    success: true,
                     message: 'Test login successful',
                     userId: userId,
                     sessionData: req.session
