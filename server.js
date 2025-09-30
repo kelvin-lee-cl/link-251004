@@ -314,10 +314,21 @@ function requireUserType(allowedTypes) {
 
 // Login endpoint
 app.post('/api/login', (req, res) => {
-    console.log('=== LOGIN ATTEMPT ===');
-    console.log('Request headers:', req.headers);
-    console.log('Request origin:', req.get('origin'));
-    console.log('Request body:', req.body);
+    console.log('=== ENHANCED LOGIN DEBUG ===');
+    console.log('🔍 Request Details:');
+    console.log('  - Method:', req.method);
+    console.log('  - URL:', req.url);
+    console.log('  - Headers:', JSON.stringify(req.headers, null, 2));
+    console.log('  - Origin:', req.get('origin'));
+    console.log('  - User-Agent:', req.get('user-agent'));
+    console.log('  - Request body:', req.body);
+
+    console.log('🔐 Pre-Login Session Analysis:');
+    console.log('  - Session ID:', req.sessionID);
+    console.log('  - Session exists:', !!req.session);
+    console.log('  - Session keys:', req.session ? Object.keys(req.session) : 'No session');
+    console.log('  - Session data:', req.session);
+    console.log('  - Store type:', req.sessionStore ? req.sessionStore.constructor.name : 'Unknown');
 
     const { passcode } = req.body;
 
@@ -413,22 +424,64 @@ app.post('/api/logout', (req, res) => {
 
 // Check authentication status endpoint
 app.get('/api/auth-status', (req, res) => {
-    console.log('=== AUTH STATUS CHECK ===');
-    console.log('Request headers:', req.headers);
-    console.log('Request origin:', req.get('origin'));
-    console.log('Session ID:', req.sessionID);
-    console.log('Session data keys:', req.session ? Object.keys(req.session) : 'No session');
-    console.log('Session data:', req.session);
-    console.log('Cookies:', req.headers.cookie);
-    console.log('Session store type:', req.sessionStore ? req.sessionStore.constructor.name : 'Unknown');
+    console.log('=== ENHANCED AUTH STATUS DEBUG ===');
+    console.log('🔍 Request Details:');
+    console.log('  - Method:', req.method);
+    console.log('  - URL:', req.url);
+    console.log('  - Headers:', JSON.stringify(req.headers, null, 2));
+    console.log('  - Origin:', req.get('origin'));
+    console.log('  - User-Agent:', req.get('user-agent'));
+    console.log('  - Referer:', req.get('referer'));
 
-    // Debug session loading
+    console.log('🍪 Cookie Analysis:');
+    console.log('  - Raw cookies:', req.headers.cookie);
+    console.log('  - Parsed cookies:', req.cookies);
+    console.log('  - Session cookie name:', req.session ? req.session.cookie.name : 'No session');
+
+    console.log('🔐 Session Analysis:');
+    console.log('  - Session ID:', req.sessionID);
+    console.log('  - Session exists:', !!req.session);
+    console.log('  - Session type:', typeof req.session);
+    console.log('  - Session constructor:', req.session ? req.session.constructor.name : 'No session');
+    console.log('  - Session keys:', req.session ? Object.keys(req.session) : 'No session');
+    console.log('  - Full session data:', JSON.stringify(req.session, null, 2));
+
+    console.log('🏪 Session Store Analysis:');
+    console.log('  - Store exists:', !!req.sessionStore);
+    console.log('  - Store type:', req.sessionStore ? req.sessionStore.constructor.name : 'No store');
+    console.log('  - Store methods:', req.sessionStore ? Object.getOwnPropertyNames(Object.getPrototypeOf(req.sessionStore)) : 'No store');
+
+    console.log('🌍 Environment Analysis:');
+    console.log('  - NODE_ENV:', process.env.NODE_ENV);
+    console.log('  - PORT:', process.env.PORT);
+    console.log('  - REDIS_URL exists:', !!process.env.REDIS_URL);
+    console.log('  - SESSION_SECRET exists:', !!process.env.SESSION_SECRET);
+
+    // Enhanced session debugging
     if (req.session) {
-        console.log('🔍 Session loaded from store');
+        console.log('✅ Session loaded from store');
         console.log('  - Session has userId:', !!req.session.userId);
+        console.log('  - Session userId value:', req.session.userId);
         console.log('  - Session keys count:', Object.keys(req.session).length);
+        console.log('  - Session cookie settings:', req.session.cookie);
+        console.log('  - Session isNew:', req.session.isNew);
+        console.log('  - Session isModified:', req.session.isModified);
     } else {
         console.log('❌ No session loaded from store');
+        console.log('  - This indicates session middleware is not working');
+        console.log('  - Check if session middleware is properly configured');
+    }
+
+    // Check for specific authentication issues
+    if (!req.session) {
+        console.log('🚨 CRITICAL: No session object found');
+        console.log('  - Session middleware may not be working');
+        console.log('  - Check session configuration');
+    } else if (!req.session.userId) {
+        console.log('🚨 CRITICAL: Session exists but no userId');
+        console.log('  - User may not have logged in');
+        console.log('  - Session may have been cleared');
+        console.log('  - Check login endpoint');
     }
 
     if (req.session && req.session.userId) {
@@ -437,20 +490,90 @@ app.get('/api/auth-status', (req, res) => {
         const userRole = userType === 'marble_run' ? 'Marble Run Game Participant' : 'Individual User';
         const isAdmin = userId === '201'; // M514 is admin user
 
-        console.log(`User ${userId} is authenticated as ${userRole}${isAdmin ? ' (ADMIN)' : ''}`);
+        console.log(`✅ User ${userId} is authenticated as ${userRole}${isAdmin ? ' (ADMIN)' : ''}`);
         res.json({
             authenticated: true,
             userId: userId,
             userType: userType,
             userRole: userRole,
-            isAdmin: isAdmin
+            isAdmin: isAdmin,
+            debug: {
+                sessionId: req.sessionID,
+                sessionKeys: Object.keys(req.session),
+                storeType: req.sessionStore ? req.sessionStore.constructor.name : 'Unknown'
+            }
         });
     } else {
-        console.log('User is not authenticated - no session or no userId');
-        console.log('Session exists:', !!req.session);
-        console.log('userId exists:', !!(req.session && req.session.userId));
-        res.json({ authenticated: false });
+        console.log('❌ User is not authenticated');
+        console.log('  - Session exists:', !!req.session);
+        console.log('  - userId exists:', !!(req.session && req.session.userId));
+        console.log('  - userId value:', req.session ? req.session.userId : 'No session');
+
+        res.json({
+            authenticated: false,
+            debug: {
+                sessionExists: !!req.session,
+                userIdExists: !!(req.session && req.session.userId),
+                sessionId: req.sessionID,
+                sessionKeys: req.session ? Object.keys(req.session) : [],
+                storeType: req.sessionStore ? req.sessionStore.constructor.name : 'Unknown',
+                cookies: req.headers.cookie,
+                environment: {
+                    nodeEnv: process.env.NODE_ENV,
+                    port: process.env.PORT,
+                    redisUrl: !!process.env.REDIS_URL
+                }
+            }
+        });
     }
+});
+
+// Debug endpoint to test session creation
+app.get('/api/debug-session', (req, res) => {
+    console.log('=== DEBUG SESSION ENDPOINT ===');
+    console.log('🔍 Current Session State:');
+    console.log('  - Session ID:', req.sessionID);
+    console.log('  - Session exists:', !!req.session);
+    console.log('  - Session keys:', req.session ? Object.keys(req.session) : 'No session');
+    console.log('  - Session data:', JSON.stringify(req.session, null, 2));
+    console.log('  - Store type:', req.sessionStore ? req.sessionStore.constructor.name : 'Unknown');
+
+    // Test session creation
+    console.log('🧪 Testing Session Creation:');
+    req.session.testValue = 'debug-test-' + Date.now();
+    req.session.debugTimestamp = new Date().toISOString();
+
+    console.log('  - Added test values to session');
+    console.log('  - Session after modification:', JSON.stringify(req.session, null, 2));
+
+    // Force save session
+    req.session.save((err) => {
+        if (err) {
+            console.error('❌ Error saving debug session:', err);
+            res.json({
+                success: false,
+                error: 'Session save failed',
+                details: err.message,
+                sessionId: req.sessionID,
+                sessionExists: !!req.session,
+                storeType: req.sessionStore ? req.sessionStore.constructor.name : 'Unknown'
+            });
+        } else {
+            console.log('✅ Debug session saved successfully');
+            res.json({
+                success: true,
+                message: 'Debug session created and saved',
+                sessionId: req.sessionID,
+                sessionData: req.session,
+                storeType: req.sessionStore ? req.sessionStore.constructor.name : 'Unknown',
+                environment: {
+                    nodeEnv: process.env.NODE_ENV,
+                    port: process.env.PORT,
+                    redisUrl: !!process.env.REDIS_URL
+                }
+            });
+        }
+    });
 });
 
 
