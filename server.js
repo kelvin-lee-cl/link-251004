@@ -6,8 +6,10 @@ const FormData = require('form-data');
 const session = require('express-session');
 const admin = require('firebase-admin');
 
-// Session store for production (Redis would be better, but this is a simple fix)
+// Session store for production - use Redis in production, MemoryStore in development
 const MemoryStore = require('memorystore')(session);
+const RedisStore = require('connect-redis').default;
+const { createClient } = require('redis');
 
 // Load environment variables from .env file if it exists
 try {
@@ -66,6 +68,33 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Configure session store based on environment
+let sessionStore;
+if (process.env.NODE_ENV === 'production' && process.env.REDIS_URL) {
+    // Use Redis in production
+    const redisClient = createClient({
+        url: process.env.REDIS_URL,
+        legacyMode: true
+    });
+    redisClient.connect().catch(console.error);
+    sessionStore = new RedisStore({ client: redisClient });
+    console.log('Using Redis session store for production');
+} else {
+    // Use MemoryStore in development
+    sessionStore = new MemoryStore({
+        checkPeriod: 86400000, // prune expired entries every 24h
+        max: 1000, // max sessions
+        ttl: 24 * 60 * 60 * 1000, // 24 hours in milliseconds
+        dispose: function (key, value) {
+            console.log('Session disposed:', key);
+        },
+        errorHandler: function (error) {
+            console.error('Session store error:', error);
+        }
+    });
+    console.log('Using MemoryStore for development');
+}
+
 // Session configuration - Production-optimized with explicit settings
 const sessionConfig = {
     secret: process.env.SESSION_SECRET || 'link-stem-workshop-2025',
@@ -80,18 +109,7 @@ const sessionConfig = {
         sameSite: 'lax', // CSRF protection
         path: '/', // Ensure cookie is available for all paths
     },
-    // Use MemoryStore with explicit configuration for Render compatibility
-    store: new MemoryStore({
-        checkPeriod: 86400000, // prune expired entries every 24h
-        max: 1000, // max sessions
-        ttl: 24 * 60 * 60 * 1000, // 24 hours in milliseconds
-        dispose: function (key, value) {
-            console.log('Session disposed:', key);
-        },
-        errorHandler: function (error) {
-            console.error('Session store error:', error);
-        }
-    })
+    store: sessionStore
 };
 
 console.log('Session configuration:', sessionConfig);
