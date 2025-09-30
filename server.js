@@ -46,6 +46,7 @@ app.use(cors({
         const allowedOrigins = [
             'http://localhost:3000',
             'http://127.0.0.1:3000',
+            'http://localhost:10000,
             'https://link-251004.onrender.com',
             'https://marble-run-link-centre.onrender.com'
         ];
@@ -345,26 +346,6 @@ app.post('/api/login', (req, res) => {
         console.log('Before save - Session keys:', Object.keys(req.session));
         console.log('Before save - Session data:', req.session);
 
-        // Force save the session
-        req.session.save((err) => {
-            if (err) {
-                console.error('❌ Error saving session after login:', err);
-                console.error('Session save error details:', err.message);
-            } else {
-                console.log('✅ Session saved successfully after login');
-                console.log('After save - Session ID:', req.sessionID);
-                console.log('After save - Session keys:', Object.keys(req.session));
-                console.log('After save - Session data:', req.session);
-
-                // Verify the session was saved correctly
-                if (req.session.userId) {
-                    console.log('✅ userId verified in session after save:', req.session.userId);
-                } else {
-                    console.error('❌ userId NOT found in session after save!');
-                }
-            }
-        });
-
         // Track login time
         const loginData = {
             userId: userId,
@@ -397,14 +378,41 @@ app.post('/api/login', (req, res) => {
         console.log(`User ${userId} logged in successfully as ${userRole}${isAdmin ? ' (ADMIN)' : ''}`);
         console.log('Session ID after login:', req.sessionID);
         console.log('Session data after login:', req.session);
-        res.json({
-            success: true,
-            userId: userId,
-            userType: userType,
-            userRole: userRole,
-            isAdmin: isAdmin,
-            redirectTo: isAdmin ? '/question-booth.html' : null,
-            message: 'Login successful'
+
+        // CRITICAL FIX: Save session BEFORE sending response
+        req.session.save((err) => {
+            if (err) {
+                console.error('❌ Error saving session after login:', err);
+                console.error('Session save error details:', err.message);
+                return res.status(500).json({ 
+                    success: false, 
+                    error: 'Session save failed',
+                    details: err.message 
+                });
+            } else {
+                console.log('✅ Session saved successfully after login');
+                console.log('After save - Session ID:', req.sessionID);
+                console.log('After save - Session keys:', Object.keys(req.session));
+                console.log('After save - Session data:', req.session);
+
+                // Verify the session was saved correctly
+                if (req.session.userId) {
+                    console.log('✅ userId verified in session after save:', req.session.userId);
+                } else {
+                    console.error('❌ userId NOT found in session after save!');
+                }
+
+                // Send response ONLY after session is saved
+                res.json({
+                    success: true,
+                    userId: userId,
+                    userType: userType,
+                    userRole: userRole,
+                    isAdmin: isAdmin,
+                    redirectTo: isAdmin ? '/question-booth.html' : null,
+                    message: 'Login successful'
+                });
+            }
         });
     } else {
         console.log('Invalid passcode provided:', passcode.toUpperCase());
