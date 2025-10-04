@@ -761,6 +761,183 @@
             checkoutBtn.style.display = 'block';
         }
 
+        // Function to show admin confirmation modal
+        function showAdminConfirmationModal(total, remainingTokens, cart) {
+            // Create admin confirmation modal if it doesn't exist
+            let adminModal = document.getElementById('adminConfirmationModal');
+            if (!adminModal) {
+                adminModal = document.createElement('div');
+                adminModal.id = 'adminConfirmationModal';
+                adminModal.className = 'modal fade';
+                adminModal.setAttribute('tabindex', '-1');
+                adminModal.setAttribute('aria-labelledby', 'adminConfirmationModalLabel');
+                adminModal.setAttribute('aria-hidden', 'true');
+                adminModal.innerHTML = `
+                    <div class="modal-dialog modal-lg">
+                        <div class="modal-content">
+                            <div class="modal-header bg-warning text-dark">
+                                <h5 class="modal-title" id="adminConfirmationModalLabel">
+                                    <i class="fas fa-shopping-cart me-2"></i>Transaction Confirmation Required
+                                </h5>
+                            </div>
+                            <div class="modal-body">
+                                <div class="mb-4">
+                                    <h4 class="text-center mb-3">Transaction Details</h4>
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <div class="card border-primary">
+                                                <div class="card-body text-center">
+                                                    <h5 class="text-primary">${total}</h5>
+                                                    <p class="mb-0">Total Cost (Tokens)</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="card border-info">
+                                                <div class="card-body text-center">
+                                                    <h5 class="text-info">${remainingTokens}</h5>
+                                                    <p class="mb-0">Current Balance</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="card border-success">
+                                                <div class="card-body text-center">
+                                                    <h5 class="text-success">${remainingTokens - total}</h5>
+                                                    <p class="mb-0">After Purchase</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <h5>Items to Purchase:</h5>
+                                    <ul class="list-group">
+                                        ${cart.map(item => `<li class="list-group-item d-flex justify-content-between">
+                                            <span>${item.name} x${item.quantity}</span>
+                                            <span class="badge bg-primary">${item.tokens * item.quantity} tokens</span>
+                                        </li>`).join('')}
+                                    </ul>
+                                </div>
+                                
+                                <div class="alert alert-warning">
+                                    <i class="fas fa-exclamation-triangle me-2"></i>
+                                    <strong>Admin Confirmation Required:</strong> Please have an admin enter the passkey to confirm this transaction.
+                                </div>
+
+                                <form id="adminConfirmationForm">
+                                    <div class="mb-3">
+                                        <label for="adminPasskey" class="form-label">Admin Passkey</label>
+                                        <input type="password" class="form-control" id="adminPasskey" 
+                                               placeholder="Enter admin passkey" required>
+                                    </div>
+                                    <div class="d-grid gap-2">
+                                        <button type="submit" class="btn btn-warning btn-lg">
+                                            <i class="fas fa-check me-2"></i>Confirm Transaction
+                                        </button>
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                            <i class="fas fa-times me-2"></i>Cancel
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(adminModal);
+            }
+
+            // Update the modal content with current transaction details
+            const totalElement = adminModal.querySelector('.text-primary');
+            const balanceElement = adminModal.querySelector('.text-info');
+            const afterElement = adminModal.querySelector('.text-success');
+            const itemsList = adminModal.querySelector('.list-group');
+
+            if (totalElement) totalElement.textContent = total;
+            if (balanceElement) balanceElement.textContent = remainingTokens;
+            if (afterElement) afterElement.textContent = remainingTokens - total;
+            if (itemsList) {
+                itemsList.innerHTML = cart.map(item => `<li class="list-group-item d-flex justify-content-between">
+                    <span>${item.name} x${item.quantity}</span>
+                    <span class="badge bg-primary">${item.tokens * item.quantity} tokens</span>
+                </li>`).join('');
+            }
+
+            // Show the modal
+            const modal = new bootstrap.Modal(adminModal);
+            modal.show();
+
+            // Handle form submission
+            const form = document.getElementById('adminConfirmationForm');
+            form.onsubmit = async (e) => {
+                e.preventDefault();
+                const passkey = document.getElementById('adminPasskey').value;
+
+                if (passkey === 'M514') {
+                    // Correct passkey - process the transaction
+                    modal.hide();
+                    await processTransaction(total, cart);
+                } else {
+                    // Wrong passkey
+                    alert('Invalid admin passkey! Please try again.');
+                    document.getElementById('adminPasskey').value = '';
+                    document.getElementById('adminPasskey').focus();
+                }
+            };
+        }
+
+        // Function to process the transaction after admin confirmation
+        async function processTransaction(total, cart) {
+            try {
+                // Get current user ID
+                const authResponse = await fetch('/api/auth-status', { credentials: 'include' });
+                const authData = await authResponse.json();
+                const currentUserId = authData.userId;
+
+                // Process the purchase by consuming tokens
+                const consumeResponse = await fetch('/api/consume-tokens', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        teamId: currentUserId, // Use userId as teamId for individual users
+                        tokensConsumed: total,
+                        itemName: cart.map(item => `${item.name} x${item.quantity}`).join(', ')
+                    })
+                });
+
+                const consumeData = await consumeResponse.json();
+
+                if (consumeData.success) {
+                    alert(`Purchase successful! ${total} tokens consumed.\n\nItems purchased:\n${cart.map(item => `${item.name} x${item.quantity}`).join('\n')}`);
+
+                    // Clear cart after successful checkout
+                    cart = [];
+                    updateCartDisplay();
+
+                    // Refresh token balance display
+                    loadTokenBalance();
+
+                    // Refresh user progress if the function exists
+                    if (typeof loadUserProgress === 'function') {
+                        loadUserProgress();
+                    }
+
+                    // Update public display if it's open
+                    updatePublicDisplay();
+                } else {
+                    alert('Purchase failed: ' + (consumeData.error || 'Unknown error'));
+                }
+
+            } catch (error) {
+                console.error('Transaction processing error:', error);
+                alert('Transaction failed. Please try again.');
+            }
+        }
+
         async function checkout() {
             if (cart.length === 0) return;
 
@@ -818,53 +995,8 @@
                     return;
                 }
 
-                // Confirm purchase
-                const confirmPurchase = confirm(
-                    `Confirm Purchase?\n\n` +
-                    `Total Cost: ${total} tokens\n` +
-                    `Your Remaining Balance: ${remainingTokens} tokens\n` +
-                    `After Purchase: ${remainingTokens - total} tokens\n\n` +
-                    `Items:\n${cart.map(item => `${item.name} x${item.quantity}`).join('\n')}`
-                );
-
-                if (!confirmPurchase) return;
-
-                // Process the purchase by consuming tokens
-                const consumeResponse = await fetch('/api/consume-tokens', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    credentials: 'include',
-                    body: JSON.stringify({
-                        teamId: currentUserId, // Use userId as teamId for individual users
-                        tokensConsumed: total,
-                        itemName: cart.map(item => `${item.name} x${item.quantity}`).join(', ')
-                    })
-                });
-
-                const consumeData = await consumeResponse.json();
-
-                if (consumeData.success) {
-                    alert(`Purchase successful! ${total} tokens consumed.\n\nItems purchased:\n${cart.map(item => `${item.name} x${item.quantity}`).join('\n')}`);
-
-                    // Clear cart after successful checkout
-                    cart = [];
-                    updateCartDisplay();
-
-                    // Refresh token balance display
-                    loadTokenBalance();
-
-                    // Refresh user progress if the function exists
-                    if (typeof loadUserProgress === 'function') {
-                        loadUserProgress();
-                    }
-
-                    // Update public display if it's open
-                    updatePublicDisplay();
-                } else {
-                    alert('Purchase failed: ' + (consumeData.error || 'Unknown error'));
-                }
+                // Show admin confirmation modal
+                showAdminConfirmationModal(total, remainingTokens, cart);
 
             } catch (error) {
                 console.error('Checkout error:', error);

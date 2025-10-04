@@ -102,8 +102,8 @@ const QUIZ_CONFIG = {
                 },
                 {
                     type: 'number',
-                    question: 'What is the area of a circle with radius 7? (Use π = 3.14)',
-                    answer: 153.86
+                    question: 'What is the area of a circle with radius 10? (Use π = 3.14)',
+                    answer: 314
                 },
                 {
                     type: 'multiple-choice',
@@ -205,9 +205,10 @@ const QUIZ_CONFIG = {
                     correct: 1
                 },
                 {
-                    type: 'number',
+                    type: 'multiple-choice',
                     question: 'What is the acceleration due to gravity on Earth? (m/s²)',
-                    answer: 9.8
+                    options: ['9.8', '10.0', '8.9', '11.2'],
+                    correct: 0
                 },
                 {
                     type: 'multiple-choice',
@@ -216,9 +217,10 @@ const QUIZ_CONFIG = {
                     correct: 2
                 },
                 {
-                    type: 'number',
-                    question: 'What is the speed of light in vacuum? (m/s)',
-                    answer: 300000000
+                    type: 'multiple-choice',
+                    question: 'What is Newton\'s second law?',
+                    options: ['F = ma', 'F = mv', 'F = mg', 'F = mgh'],
+                    correct: 0
                 },
                 {
                     type: 'multiple-choice',
@@ -331,9 +333,10 @@ const QUIZ_CONFIG = {
                     correct: 2
                 },
                 {
-                    type: 'number',
-                    question: 'How many chambers does a human heart have?',
-                    answer: 4
+                    type: 'multiple-choice',
+                    question: 'What does DNA stand for?',
+                    options: ['Deoxyribonucleic Acid', 'Deoxyribose Nucleic Acid', 'Deoxyribonucleotide Acid', 'Deoxyribose Nucleotide Acid'],
+                    correct: 0
                 },
                 {
                     type: 'multiple-choice',
@@ -342,9 +345,10 @@ const QUIZ_CONFIG = {
                     correct: 1
                 },
                 {
-                    type: 'number',
-                    question: 'How many bones are in an adult human body?',
-                    answer: 206
+                    type: 'multiple-choice',
+                    question: 'The longest lifespan for a butterfly is held by species such as the Mourning Cloak (Nymphalis antiopa), which can live up to how many months?',
+                    options: ['6-8 months', '8-10 months', '11-12 months', '13-15 months'],
+                    correct: 2
                 },
                 {
                     type: 'multiple-choice',
@@ -353,9 +357,10 @@ const QUIZ_CONFIG = {
                     correct: 1
                 },
                 {
-                    type: 'number',
-                    question: 'How many pairs of chromosomes do humans have?',
-                    answer: 23
+                    type: 'multiple-choice',
+                    question: 'What is the main difference between animal cells and plant cells?',
+                    options: ['Animal cells have cell walls, plant cells do not', 'Plant cells have chloroplasts, animal cells do not', 'Animal cells are larger than plant cells', 'Plant cells have nuclei, animal cells do not'],
+                    correct: 1
                 },
                 {
                     type: 'multiple-choice',
@@ -364,9 +369,10 @@ const QUIZ_CONFIG = {
                     correct: 2
                 },
                 {
-                    type: 'number',
-                    question: 'What is the normal body temperature in Celsius?',
-                    answer: 37
+                    type: 'multiple-choice',
+                    question: 'How many hearts do octopuses have?',
+                    options: ['1 heart', '2 hearts', '3 hearts', '4 hearts'],
+                    correct: 2
                 },
                 {
                     type: 'multiple-choice',
@@ -375,9 +381,10 @@ const QUIZ_CONFIG = {
                     correct: 2
                 },
                 {
-                    type: 'number',
-                    question: 'How many teeth does an adult human typically have?',
-                    answer: 32
+                    type: 'multiple-choice',
+                    question: 'How many brains do starfish have?',
+                    options: ['1 brain', '2 brains', '3 brains', '0 brains'],
+                    correct: 3
                 }
             ]
         },
@@ -416,9 +423,10 @@ const QUIZ_CONFIG = {
                     correct: 0
                 },
                 {
-                    type: 'number',
-                    question: 'What is the time complexity of binary search?',
-                    answer: 0
+                    type: 'multiple-choice',
+                    question: 'What is the main difference between AI and traditional coding?',
+                    options: ['AI can learn and adapt, while coding follows fixed instructions', 'AI is faster than coding', 'AI doesn\'t need programming languages', 'AI replaces all coding'],
+                    correct: 0
                 },
                 {
                     type: 'multiple-choice',
@@ -457,9 +465,10 @@ const QUIZ_CONFIG = {
                     correct: 1
                 },
                 {
-                    type: 'number',
-                    question: 'What percentage of Earth\'s surface is covered by water?',
-                    answer: 71
+                    type: 'multiple-choice',
+                    question: 'Name one source of renewable energy.',
+                    options: ['Solar', 'Wind', 'Hydropower', 'All of the above'],
+                    correct: 3
                 },
                 {
                     type: 'multiple-choice',
@@ -468,9 +477,10 @@ const QUIZ_CONFIG = {
                     correct: 0
                 },
                 {
-                    type: 'number',
-                    question: 'How many layers does Earth\'s atmosphere have?',
-                    answer: 5
+                    type: 'multiple-choice',
+                    question: 'What can you do to save water at home?',
+                    options: ['Turn off taps when not in use', 'Fix leaks', 'Take shorter showers', 'All of the above'],
+                    correct: 3
                 },
                 {
                     type: 'multiple-choice',
@@ -479,9 +489,10 @@ const QUIZ_CONFIG = {
                     correct: 1
                 },
                 {
-                    type: 'number',
-                    question: 'What is the normal pH range of rainwater?',
-                    answer: 5.6
+                    type: 'multiple-choice',
+                    question: 'Globally, water consumption is extremely high and continues to grow. Agriculture uses about 72% of all freshwater withdrawals, industries use about 16%, and municipalities about 12%. The total global water demand is projected to increase by 20 to 30% by 2050 due to population growth and increased food demand.',
+                    options: ['True', 'False', 'Partially true', 'Cannot be determined'],
+                    correct: 0
                 },
                 {
                     type: 'multiple-choice',
@@ -490,9 +501,10 @@ const QUIZ_CONFIG = {
                     correct: 1
                 },
                 {
-                    type: 'number',
+                    type: 'multiple-choice',
                     question: 'How many years does it take for a plastic bottle to decompose?',
-                    answer: 450
+                    options: ['50 years', '200 years', '450 years', '1000 years'],
+                    correct: 2
                 },
                 {
                     type: 'multiple-choice',
@@ -501,9 +513,10 @@ const QUIZ_CONFIG = {
                     correct: 2
                 },
                 {
-                    type: 'number',
-                    question: 'What is the target temperature increase limit set by the Paris Agreement?',
-                    answer: 2
+                    type: 'multiple-choice',
+                    question: 'What does the term "carbon footprint" mean?',
+                    options: ['The amount of carbon dioxide released into the atmosphere', 'The total amount of greenhouse gases produced by human activities', 'A measure of environmental impact', 'All of the above'],
+                    correct: 3
                 }
             ]
         },
@@ -520,9 +533,10 @@ const QUIZ_CONFIG = {
                     correct: 3
                 },
                 {
-                    type: 'number',
+                    type: 'multiple-choice',
                     question: 'What is the efficiency of a machine that outputs 80J for 100J input?',
-                    answer: 80
+                    options: ['60%', '70%', '80%', '90%'],
+                    correct: 2
                 },
                 {
                     type: 'multiple-choice',
@@ -531,9 +545,10 @@ const QUIZ_CONFIG = {
                     correct: 1
                 },
                 {
-                    type: 'number',
-                    question: 'What is the stress formula?',
-                    answer: 0
+                    type: 'multiple-choice',
+                    question: 'What is the basic stress formula?',
+                    options: ['Stress = Force / Area', 'Stress = Force × Area', 'Stress = Force + Area', 'Stress = Force - Area'],
+                    correct: 0
                 },
                 {
                     type: 'multiple-choice',
@@ -542,9 +557,10 @@ const QUIZ_CONFIG = {
                     correct: 1
                 },
                 {
-                    type: 'number',
-                    question: 'What is the Young\'s modulus of steel? (GPa)',
-                    answer: 200
+                    type: 'multiple-choice',
+                    question: 'What is the Young\'s modulus of steel approximately?',
+                    options: ['100 GPa', '150 GPa', '200 GPa', '250 GPa'],
+                    correct: 2
                 },
                 {
                     type: 'multiple-choice',
@@ -553,9 +569,10 @@ const QUIZ_CONFIG = {
                     correct: 2
                 },
                 {
-                    type: 'number',
-                    question: 'What is the safety factor for critical structures?',
-                    answer: 3
+                    type: 'multiple-choice',
+                    question: 'What is the typical safety factor for critical structures?',
+                    options: ['1.5', '2.0', '3.0', '4.0'],
+                    correct: 2
                 },
                 {
                     type: 'multiple-choice',
@@ -564,9 +581,10 @@ const QUIZ_CONFIG = {
                     correct: 1
                 },
                 {
-                    type: 'number',
-                    question: 'What is the maximum stress a material can withstand?',
-                    answer: 0
+                    type: 'multiple-choice',
+                    question: 'What is the maximum stress a material can withstand called?',
+                    options: ['Yield strength', 'Ultimate strength', 'Elastic limit', 'All of the above'],
+                    correct: 3
                 }
             ]
         },
@@ -583,9 +601,10 @@ const QUIZ_CONFIG = {
                     correct: 1
                 },
                 {
-                    type: 'number',
+                    type: 'multiple-choice',
                     question: 'What is the median of 3, 7, 9, 12, 15?',
-                    answer: 9
+                    options: ['7', '9', '12', '15'],
+                    correct: 1
                 },
                 {
                     type: 'multiple-choice',
@@ -594,9 +613,10 @@ const QUIZ_CONFIG = {
                     correct: 1
                 },
                 {
-                    type: 'number',
+                    type: 'multiple-choice',
                     question: 'What is the range of 10, 15, 20, 25, 30?',
-                    answer: 20
+                    options: ['15', '20', '25', '30'],
+                    correct: 1
                 },
                 {
                     type: 'multiple-choice',
@@ -605,9 +625,10 @@ const QUIZ_CONFIG = {
                     correct: 2
                 },
                 {
-                    type: 'number',
+                    type: 'multiple-choice',
                     question: 'What is the probability of rolling a 6 on a fair die?',
-                    answer: 0.17
+                    options: ['1/6', '1/3', '1/2', '2/3'],
+                    correct: 0
                 },
                 {
                     type: 'multiple-choice',
@@ -616,9 +637,10 @@ const QUIZ_CONFIG = {
                     correct: 1
                 },
                 {
-                    type: 'number',
+                    type: 'multiple-choice',
                     question: 'What is the correlation coefficient range?',
-                    answer: 0
+                    options: ['-1 to 1', '0 to 1', '-2 to 2', '0 to 2'],
+                    correct: 0
                 },
                 {
                     type: 'multiple-choice',
@@ -627,9 +649,10 @@ const QUIZ_CONFIG = {
                     correct: 2
                 },
                 {
-                    type: 'number',
-                    question: 'What is the sample size for a 95% confidence interval?',
-                    answer: 0
+                    type: 'multiple-choice',
+                    question: 'What is data science mainly about?',
+                    options: ['Playing video games', 'Analyzing and understanding data', 'Drawing pictures', 'Writing stories'],
+                    correct: 1
                 }
             ]
         }

@@ -648,14 +648,14 @@
                         <div class="stat-label">Total Teams</div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-icon">🎯</div>
-                        <div class="stat-value" id="totalPoints">0</div>
-                        <div class="stat-label">Total Points</div>
+                        <div class="stat-icon">🏃</div>
+                        <div class="stat-value" id="highestTravelling">0</div>
+                        <div class="stat-label">Highest Travelling</div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-icon">⭐</div>
-                        <div class="stat-value" id="avgScore">0</div>
-                        <div class="stat-label">Average Score</div>
+                        <div class="stat-icon">🏆</div>
+                        <div class="stat-value" id="topTeamName">-</div>
+                        <div class="stat-label">Team name for highest score</div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-icon">🏅</div>
@@ -725,7 +725,7 @@
                             <div class="col-md-6">
                                 <div class="alert alert-info">
                                     <h6><i class="fas fa-info-circle me-2"></i>Scoring Formula</h6>
-                                    <p class="mb-1"><strong>Score = (Longest Time × 2000) ÷ (Total Consumed Tokens) +
+                                    <p class="mb-1"><strong>Score = (Longest Time × 20000) ÷ (Total Consumed Tokens) +
                                             Total Remaining Tokens × 5</strong></p>
                                     <small class="text-muted">
                                         • Tokens earned from Question Booth quizzes<br>
@@ -814,18 +814,18 @@
                 const teamTokens = TEAM_TOKENS[team.id] || { earned: 0, consumed: 0 };
                 const remainingTokens = teamTokens.earned - teamTokens.consumed;
 
-                // Get user-specific longest time, fallback to global LONGEST_TIME, then default to 60 seconds
-                const userLongestTime = (window.USER_LONGEST_TIMES && window.USER_LONGEST_TIMES[team.id]) || LONGEST_TIME || 60;
+                // Get user-specific longest time, fallback to global LONGEST_TIME, then default to 0 seconds
+                const userLongestTime = (window.USER_LONGEST_TIMES && window.USER_LONGEST_TIMES[team.id]) || LONGEST_TIME || 0;
 
                 let calculatedScore = 0;
                 // Always apply the formula, using default longest time if needed
-                // New formula: (Longest Time × 2000) ÷ (Total Consumed Tokens) + Total Remaining Tokens × 5
+                // New formula: (Longest Time × 20000) ÷ (Total Consumed Tokens) + Total Remaining Tokens × 5
                 const consumedTokens = teamTokens.consumed || 0;
                 const remainingTokensValue = remainingTokens || 0;
 
                 // Use 1 as default if no consumed tokens
                 const divisor = consumedTokens > 0 ? consumedTokens : 1;
-                calculatedScore = (userLongestTime * 2000) / divisor + (remainingTokensValue * 5);
+                calculatedScore = (userLongestTime * 20000) / divisor + (remainingTokensValue * 5);
 
                 // Debug logging
                 console.log(`Team ${team.name} (${team.id}):`, {
@@ -856,7 +856,7 @@
                 const rankClass = rank === 1 ? 'first' : rank === 2 ? 'second' : rank === 3 ? 'third' : '';
 
                 // Get user-specific longest time for this team
-                const teamLongestTime = (window.USER_LONGEST_TIMES && window.USER_LONGEST_TIMES[team.id]) || LONGEST_TIME || 60;
+                const teamLongestTime = (window.USER_LONGEST_TIMES && window.USER_LONGEST_TIMES[team.id]) || LONGEST_TIME || 0;
 
                 html += `
                     <div class="team-row">
@@ -890,28 +890,39 @@
                 const teamTokens = TEAM_TOKENS[team.id] || { earned: 0, consumed: 0 };
                 const remainingTokens = teamTokens.earned - teamTokens.consumed;
 
-                // Get user-specific longest time, fallback to global LONGEST_TIME, then default to 60 seconds
-                const userLongestTime = (window.USER_LONGEST_TIMES && window.USER_LONGEST_TIMES[team.id]) || LONGEST_TIME || 60;
+                // Get user-specific longest time, fallback to global LONGEST_TIME, then default to 0 seconds
+                const userLongestTime = (window.USER_LONGEST_TIMES && window.USER_LONGEST_TIMES[team.id]) || LONGEST_TIME || 0;
 
                 let calculatedScore = 0;
                 // Always apply the formula, using default longest time if needed
-                // New formula: (Longest Time × 2000) ÷ (Total Consumed Tokens) + Total Remaining Tokens × 5
+                // New formula: (Longest Time × 20000) ÷ (Total Consumed Tokens) + Total Remaining Tokens × 5
                 const consumedTokens = teamTokens.consumed || 0;
                 const remainingTokensValue = remainingTokens || 0;
 
                 // Use 1 as default if no consumed tokens
                 const divisor = consumedTokens > 0 ? consumedTokens : 1;
-                calculatedScore = (userLongestTime * 2000) / divisor + (remainingTokensValue * 5);
-                return calculatedScore;
+                calculatedScore = (userLongestTime * 20000) / divisor + (remainingTokensValue * 5);
+                return {
+                    team: team,
+                    score: calculatedScore,
+                    travellingTime: userLongestTime
+                };
             });
 
-            const totalPoints = teamsWithScores.reduce((sum, score) => sum + score, 0);
-            const avgScore = totalTeams > 0 ? Math.round(totalPoints / totalTeams * 100) / 100 : 0;
-            const topScore = teamsWithScores.length > 0 ? Math.round(Math.max(...teamsWithScores) * 100) / 100 : 0;
+            // Find highest travelling time
+            const highestTravelling = teamsWithScores.length > 0 ?
+                Math.max(...teamsWithScores.map(t => t.travellingTime)) : 0;
+
+            // Find team with highest score
+            const topTeam = teamsWithScores.length > 0 ?
+                teamsWithScores.reduce((max, current) => current.score > max.score ? current : max) : null;
+
+            const topScore = topTeam ? Math.round(topTeam.score * 100) / 100 : 0;
+            const topTeamName = topTeam ? topTeam.team.name : '-';
 
             document.getElementById('totalTeams').textContent = totalTeams;
-            document.getElementById('totalPoints').textContent = Math.round(totalPoints * 100) / 100;
-            document.getElementById('avgScore').textContent = avgScore;
+            document.getElementById('highestTravelling').textContent = highestTravelling;
+            document.getElementById('topTeamName').textContent = topTeamName;
             document.getElementById('topScore').textContent = topScore;
         }
 
