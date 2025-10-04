@@ -294,7 +294,8 @@ function requireUserType(allowedTypes) {
     return (req, res, next) => {
         if (req.session && req.session.userId) {
             const userId = parseInt(req.session.userId);
-            const userType = userId <= 16 ? 'marble_run' : 'individual';
+            // All users 1-200 are marble_run participants, only admin (201) is different
+            const userType = userId <= 200 ? 'marble_run' : 'individual';
 
             if (allowedTypes.includes(userType)) {
                 return next();
@@ -369,7 +370,7 @@ app.post('/api/login', (req, res) => {
         }
 
         // Determine user type based on User ID
-        const userType = parseInt(userId) <= 16 ? 'marble_run' : 'individual';
+        const userType = parseInt(userId) <= 200 ? 'marble_run' : 'individual';
         const userRole = userType === 'marble_run' ? 'Marble Run Game Participant' : 'Individual User';
         const isAdmin = userId === '201'; // M514 is admin user
 
@@ -492,7 +493,7 @@ app.get('/api/auth-status', (req, res) => {
 
     if (req.session && req.session.userId) {
         const userId = req.session.userId;
-        const userType = parseInt(userId) <= 16 ? 'marble_run' : 'individual';
+        const userType = parseInt(userId) <= 200 ? 'marble_run' : 'individual';
         const userRole = userType === 'marble_run' ? 'Marble Run Game Participant' : 'Individual User';
         const isAdmin = userId === '201'; // M514 is admin user
 
